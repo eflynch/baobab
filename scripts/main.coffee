@@ -7,6 +7,16 @@ class TreeState
 	constructor: ({@value, @callback, @parent}) ->
 		@subtrees = []
 		@id = Math.round Math.random() * 100000
+		@collapsed = false
+	setCollapsed: (newValue) =>
+		@collapsed = newValue
+		@callback()
+		return
+	getCollapsed: ->
+		if @subtrees.length
+			return @collapsed
+		@collapsed = false
+		return false
 	setValue: (newValue) =>
 		@value = newValue
 		@callback()
@@ -30,12 +40,18 @@ Tree = React.createClass
 	getInitialState: ->
 		root: mockData
 		focus: mockData
+		head: mockData
 	render: -> TreeNode
 		changeCallback: (newValue) =>
 			if @state.focus?
 				@state.focus.setValue newValue
 				return true
 			return false
+		toggleCollapsedCallback: =>
+			if @state.focus.getCollapsed()
+				@state.focus.setCollapsed false
+			else
+				@state.focus.setCollapsed true
 		addChildCallback: =>
 			newTree = @state.focus.addSubTree ''
 			@setState({focus: newTree})
@@ -49,13 +65,19 @@ Tree = React.createClass
 		focusCallback: (newFocus) =>
 			@setState({focus: newFocus})
 			return true
+		setHeadCallback: =>
+			@setState({head: @state.focus})
 		ascendCallback: =>
 			if @state.focus.parent?
+				if @state.focus == @state.head
+					@setState({head: @state.head.parent})
 				@setState({focus: @state.focus.parent})
 				return true
 			return false
 		descendCallback: =>
 			if @state.focus.subtrees.length
+				if @state.focus.getCollapsed()
+					@state.focus.setCollapsed false
 				@setState({focus: @state.focus.subtrees[0]})
 				return true
 			return false
@@ -91,8 +113,9 @@ Tree = React.createClass
 			if e.relatedTarget is null
 				@setState({focus: null})
 
-		root: @state.root
+		showEtc: @state.head != @state.root
 		focus: @state.focus
+		root: @state.head
 
 Line = React.createClass
 	getAngle: ->
@@ -129,8 +152,38 @@ Line = React.createClass
 				zIndex: -1
 			}
 
-
 Circle = React.createClass
+	displayName: 'Circle'
+
+	render: -> @transferPropsTo ra.div
+		className: 'circle'
+		style: {
+			position: 'absolute'
+			left: @props.left
+			borderRadius: @props.radius
+			width: 2 * @props.radius
+			height: 2 * @props.radius
+		}
+	,
+		@props.children
+
+Square = React.createClass
+	displayName: 'Square'
+
+	render: -> @transferPropsTo ra.div
+		className: 'circle'
+		style: {
+			position: 'absolute'
+			left: @props.left
+			width: 2 * @props.radius
+			height: 2 * @props.radius
+		}
+	,
+		@props.children
+
+
+TreeLabel = React.createClass
+	displayName: 'TreeLabel'
 	componentDidMount: ->
 		@componentDidUpdate()
 	componentDidUpdate: ->
@@ -141,14 +194,14 @@ Circle = React.createClass
 			backgroundColor = '#afa'
 		else
 			backgroundColor = '#fff'
-		return @transferPropsTo ra.div
-			className: 'circle',
+		if @props.collapsed
+			comp = Square
+		else
+			comp = Circle
+		return @transferPropsTo comp
 			style: {
 				position: 'absolute'
 				left: @props.left
-				borderRadius: @props.radius
-				width: 2 * @props.radius
-				height: 2 * @props.radius
 				backgroundColor: backgroundColor
 				textAlign: 'center'
 			}
@@ -163,7 +216,12 @@ Circle = React.createClass
 							if not @props.descendCallback()
 								if not @props.rightSiblingCallback()
 									@props.addChildCallback()
-					when 'Escape' then @props.ascendCallback()
+					when 'Escape'
+						if e.shiftKey
+							@props.toggleCollapsedCallback()
+						else
+							@props.ascendCallback()
+
 					when 'Tab'
 						e.preventDefault()
 						if e.shiftKey
@@ -186,7 +244,10 @@ Circle = React.createClass
 								@props.ascendCallback()
 						if not @props.children
 							@props.deleteCallback()
-
+					when ' '
+						if e.shiftKey
+							e.preventDefault()
+							@props.setHeadCallback()
 		, ra.input
 				type: 'text'
 				value: @props.children
@@ -206,6 +267,7 @@ TreeNode = React.createClass
 		parentWidth: 0 
 		parentRadius: 0
 		offset: 0 
+		showEtc: false
 	getRadiusFromValue: (value) ->
 		test = document.getElementById('textTest')
 		test.innerHTML = value
@@ -257,17 +319,28 @@ TreeNode = React.createClass
 				width: "#{@getThisWidth()}px"
 				height: "#{@getThisHeight()}px"
 		,
-			Line
-				width: '2px'
-				color: '#000000'
-				startX: @getLineValues().startX
-				startY: @getLineValues().startY
-				endX: @getLineValues().endX
-				endY: @getLineValues().endY
-			Circle
+			if @props.root.parent?
+				if not @props.showEtc
+					Line
+						width: '2px'
+						color: '#000000'
+						startX: @getLineValues().startX
+						startY: @getLineValues().startY
+						endX: @getLineValues().endX
+						endY: @getLineValues().endY
+				else
+					Line
+						width: '2px'
+						color: '#aaa'
+						startX: @getLineValues().startX
+						startY: @getLineValues().startY
+						endX:	@getLineValues().startX
+						endY: -20
+			TreeLabel
 				left: @getCircleOffset()
 				radius: @getRadiusFromValue(@props.root.value)
 				changeCallback: @props.changeCallback
+				toggleCollapsedCallback: @props.toggleCollapsedCallback
 				addChildCallback: @props.addChildCallback
 				addSiblingCallback: @props.addSiblingCallback
 				ascendCallback: @props.ascendCallback
@@ -277,29 +350,34 @@ TreeNode = React.createClass
 				deleteCallback: @props.deleteCallback
 				onFocus: =>
 					@props.focusCallback @props.root
+				setHeadCallback: @props.setHeadCallback
 				hasFocus: hasFocus
+				collapsed: @props.root.getCollapsed()
 			, @props.root.value
 			ra.ul null,
-				for subtree in @props.root.subtrees
-					offset += @getWidth(subtree)
-					focusCallback = @props.focusCallback
-					TreeNode
-						changeCallback: @props.changeCallback
-						addChildCallback: @props.addChildCallback
-						addSiblingCallback: @props.addSiblingCallback
-						focusCallback: @props.focusCallback
-						ascendCallback: @props.ascendCallback
-						descendCallback: @props.descendCallback
-						rightSiblingCallback: @props.rightSiblingCallback
-						leftSiblingCallback: @props.leftSiblingCallback
-						deleteCallback: @props.deleteCallback
-						root: subtree
-						focus: @props.focus
-						key: subtree.id
-						offset: offset - @getWidth(subtree)
-						verticalOffset: 20 + @getRadiusFromValue(@props.root.value) * 2 
-						parentWidth: @getThisWidth()
-						parentRadius: @getRadiusFromValue(@props.root.value)
+				if not @props.root.getCollapsed()
+					for subtree in @props.root.subtrees
+						offset += @getWidth(subtree)
+						focusCallback = @props.focusCallback
+						TreeNode
+							changeCallback: @props.changeCallback
+							toggleCollapsedCallback: @props.toggleCollapsedCallback
+							addChildCallback: @props.addChildCallback
+							addSiblingCallback: @props.addSiblingCallback
+							focusCallback: @props.focusCallback
+							setHeadCallback: @props.setHeadCallback
+							ascendCallback: @props.ascendCallback
+							descendCallback: @props.descendCallback
+							rightSiblingCallback: @props.rightSiblingCallback
+							leftSiblingCallback: @props.leftSiblingCallback
+							deleteCallback: @props.deleteCallback
+							root: subtree
+							focus: @props.focus
+							key: subtree.id
+							offset: offset - @getWidth(subtree)
+							verticalOffset: 20 + @getRadiusFromValue(@props.root.value) * 2 
+							parentWidth: @getThisWidth()
+							parentRadius: @getRadiusFromValue(@props.root.value)
 					
 
 ListNode = React.createClass
