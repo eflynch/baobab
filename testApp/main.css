@@ -12,15 +12,18 @@ ul {
 }
 
 #content {
-	width: 700px;
-	height: 500px;
+	width: 95%;
+	height: 95%;
 	margin: auto;
 	position: relative;
+	overflow: scroll;
+	padding: 20px;
 }
 
 input {
 	outline: none;
 	cursor: pointer;
+	font-family: monospace;
 }
 input:focus {
 	cursor: text;

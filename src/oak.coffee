@@ -19,15 +19,27 @@ class TreeState
 		@value = newValue
 		@callback()
 		return
-	addSubTree: (value) =>
+	addSubTree: (value, sibling = null, relation = null) =>
+		if sibling?
+			if relation == 'right'
+				insertIndex = @subtrees.indexOf(sibling)
+			if relation == 'left'
+				insertIndex = @subtrees.indexOf(sibling) + 1
+		else
+			insertIndex = @subtrees.length
 		newTree = new TreeState({value: value, callback: @callback, parent: this})
-		@subtrees.push newTree
+		@subtrees.splice insertIndex, 0, newTree
 		@callback()
 		return newTree
 	deleteSubTree: (subtree) =>
 		indexToDelete = @subtrees.indexOf(subtree)
 		if indexToDelete?
 			@subtrees.splice(indexToDelete, 1)
+	getWidth: ->
+
+	getRadius: ->
+
+	getHeight: ->
 
 Line = React.createClass
 	getAngle: ->
@@ -119,46 +131,52 @@ TreeLabel = React.createClass
 			onClick: (e) =>
 				e.currentTarget.children[0].focus()
 			onKeyDown: (e) =>
-				switch e.key
-					when 'Enter'
-						if e.shiftKey
+				shift = e.shiftKey
+				ctrl = e.ctrlKey
+				meta = e.metaKey
+				switch
+					when e.key == 'Enter' and ctrl
+						@props.setHeadCallback()
+					when e.key == ' ' and shift
+						e.preventDefault()
+						@props.toggleCollapsedCallback()
+					when e.key == 'Backspace'
+						if shift
+							e.preventDefault()
+							@props.forceDeleteCallback()
+						else
+							if not @props.children
+								e.preventDefault()
+								@props.deleteCallback()
+					when (shift and e.key == 'ArrowLeft') or (e.key == 'Backspace' and ctrl)
+						e.preventDefault()
+						if meta
+							@props.addLeftSiblingCallback()
+						else
+							if not @props.leftSiblingCallback()
+								@props.addLeftSiblingCallback()
+					when (shift and e.key == 'ArrowRight') or e.key == 'Tab'
+						e.preventDefault()
+						if meta
+							@props.addRightSiblingCallback()
+						else
+							if not @props.rightSiblingCallback()
+								@props.addRightSiblingCallback()
+					when (shift and e.key == 'ArrowDown') or e.key == 'Enter'
+						e.preventDefault()
+						if meta
 							@props.addChildCallback()
 						else
 							if not @props.descendCallback()
-								if not @props.rightSiblingCallback()
-									@props.addChildCallback()
-					when 'Escape'
-						if e.shiftKey
-							@props.toggleCollapsedCallback()
+								@props.addChildCallback()
+					when (shift and e.key == 'ArrowUp') or e.key == 'Escape'
+						if meta
+							@props.addParentCallback()
 						else
-							@props.ascendCallback()
-
-					when 'Tab'
-						e.preventDefault()
-						if e.shiftKey
-							@props.addSiblingCallback()
-						else
-							if not @props.rightSiblingCallback()
-								@props.addSiblingCallback()
-					when 'ArrowDown' then @props.descendCallback()
-					when 'ArrowUp' then @props.ascendCallback()
-					when 'ArrowRight'
-						e.preventDefault()
-						@props.rightSiblingCallback()
-					when 'ArrowLeft'
-						e.preventDefault()
-						@props.leftSiblingCallback()
-					when 'Backspace'
-						if e.shiftKey
 							e.preventDefault()
-							if not @props.leftSiblingCallback()
-								@props.ascendCallback()
-						if not @props.children
-							@props.deleteCallback()
-					when ' '
-						if e.shiftKey
-							e.preventDefault()
-							@props.setHeadCallback()
+							if not @props.ascendCallback()
+								@props.addParentCallback()
+					
 		, ra.input
 				type: 'text'
 				value: @props.children
@@ -179,10 +197,7 @@ TreeNode = React.createClass
 		parentRadius: 0
 		offset: 0 
 		showEtc: false
-	getRadiusFromValue: (value) ->
-		test = document.getElementById('textTest')
-		test.innerHTML = value
-		return Math.max((test.clientWidth + 5) / 2, 15)
+	getRadiusFromValue: (value) -> Math.max(value.length * 4 + 1, 16)
 	getWidth: (tree) ->
 		byItself = @getRadiusFromValue(tree.value) * 2 + 4
 		if not tree.subtrees.length
@@ -209,12 +224,14 @@ TreeNode = React.createClass
 	getThisHeight: -> @getHeight({value: @props.root.value, subtrees: @props.root.subtrees})
 
 	getLineValues: ->
-		startX: @getCircleOffset() + @getRadiusFromValue(@props.root.value)
-		startY: @getRadiusFromValue(@props.root.value)
+		startX: @getCenter().x
+		startY: @getCenter().y
 		endX: @props.parentWidth / 2 - @props.offset
 		endY: @props.parentRadius - @props.verticalOffset
 
-	getCircleOffset: -> @getThisWidth() / 2 - @getRadiusFromValue(@props.root.value)
+	getCenter: ->
+		x: @getThisWidth() / 2
+		y: @getRadiusFromValue(@props.root.value)
 
 	render: ->
 		if @props.focus?
@@ -248,17 +265,20 @@ TreeNode = React.createClass
 						endX:	@getLineValues().startX
 						endY: -20
 			TreeLabel
-				left: @getCircleOffset()
+				left: @getCenter().x - @getRadiusFromValue(@props.root.value)
 				radius: @getRadiusFromValue(@props.root.value)
 				changeCallback: @props.changeCallback
 				toggleCollapsedCallback: @props.toggleCollapsedCallback
 				addChildCallback: @props.addChildCallback
-				addSiblingCallback: @props.addSiblingCallback
+				addParentCallback: @props.addParentCallback
+				addRightSiblingCallback: @props.addRightSiblingCallback
+				addLeftSiblingCallback: @props.addLeftSiblingCallback
 				ascendCallback: @props.ascendCallback
 				descendCallback: @props.descendCallback
 				rightSiblingCallback: @props.rightSiblingCallback
 				leftSiblingCallback: @props.leftSiblingCallback
 				deleteCallback: @props.deleteCallback
+				forceDeleteCallback: @props.forceDeleteCallback
 				onFocus: =>
 					@props.focusCallback @props.root
 				setHeadCallback: @props.setHeadCallback
@@ -274,7 +294,9 @@ TreeNode = React.createClass
 							changeCallback: @props.changeCallback
 							toggleCollapsedCallback: @props.toggleCollapsedCallback
 							addChildCallback: @props.addChildCallback
-							addSiblingCallback: @props.addSiblingCallback
+							addParentCallback: @props.addParentCallback
+							addRightSiblingCallback: @props.addRightSiblingCallback
+							addLeftSiblingCallback: @props.addLeftSiblingCallback
 							focusCallback: @props.focusCallback
 							setHeadCallback: @props.setHeadCallback
 							ascendCallback: @props.ascendCallback
@@ -282,6 +304,7 @@ TreeNode = React.createClass
 							rightSiblingCallback: @props.rightSiblingCallback
 							leftSiblingCallback: @props.leftSiblingCallback
 							deleteCallback: @props.deleteCallback
+							forceDeleteCallback: @props.forceDeleteCallback
 							root: subtree
 							focus: @props.focus
 							key: subtree.id
@@ -325,9 +348,26 @@ OakTree = (id) ->
 				newTree = @state.focus.addSubTree ''
 				@setState({focus: newTree})
 				return true
-			addSiblingCallback: =>
+			addParentCallback: =>
+				if not @state.focus.parent?
+					newTree = new TreeState
+						value: ''
+						callback: @state.root.callback
+					newTree.subtrees.push(@state.root)
+					@state.root.parent = newTree
+					@setState
+						root: newTree
+						focus: newTree
+						head: newTree
+			addLeftSiblingCallback: =>
 				if @state.focus.parent?
-					newTree = @state.focus.parent.addSubTree ''
+					newTree = @state.focus.parent.addSubTree '', @state.focus, 'right'
+					@setState({focus: newTree})
+					return true
+				return false
+			addRightSiblingCallback: =>
+				if @state.focus.parent?
+					newTree = @state.focus.parent.addSubTree '', @state.focus, 'left'
 					@setState({focus: newTree})
 					return true
 				return false
@@ -366,6 +406,20 @@ OakTree = (id) ->
 				return false
 			deleteCallback: =>
 				if @state.focus.parent? and not @state.focus.subtrees.length
+					focus = @state.focus
+					parent = @state.focus.parent
+
+					oldIndex = parent.subtrees.indexOf(focus)
+					if oldIndex > 0
+						@setState({focus: parent.subtrees[oldIndex - 1]})
+					else
+						@setState({focus: parent})
+
+					parent.deleteSubTree(focus)
+					return true
+				return false
+			forceDeleteCallback: =>
+				if @state.focus.parent?
 					focus = @state.focus
 					parent = @state.focus.parent
 
