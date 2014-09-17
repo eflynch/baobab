@@ -1,0 +1,25 @@
+{
+  "name": "oak",
+  "version": "0.0.0",
+  "description": "Tool for Generating Tree Diagrams Easily",
+  "main": "index.coffee",
+  "scripts": {
+    "test": "test.js"
+  },
+  "author": "Evan Lynch",
+  "license": "ISC",
+  "dependencies": {
+    "jquery": "^2.1.1",
+    "react": "^0.11.2",
+    "react-art": "^0.11.0"
+  },
+  "devDependencies": {
+    "browserify": "^5.11.2",
+    "coffeeify": "^0.7.0",
+    "gulp": "^3.8.8",
+    "gulp-notify": "^1.6.0",
+    "gulp-util": "^3.0.1",
+    "vinyl-source-stream": "^1.0.0",
+    "watchify": "^1.0.2"
+  }
+}
