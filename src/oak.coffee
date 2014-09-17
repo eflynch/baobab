@@ -1,6 +1,4 @@
 React = require('react')
-$ = require('jquery')
-
 ra = React.DOM
 
 class TreeState
@@ -30,92 +28,6 @@ class TreeState
 		indexToDelete = @subtrees.indexOf(subtree)
 		if indexToDelete?
 			@subtrees.splice(indexToDelete, 1)
-
-
-mockData = new TreeState
-	value: ''
-	callback: -> React.renderComponent(Tree(null), document.getElementById('content'))
-
-Tree = React.createClass
-	getInitialState: ->
-		root: mockData
-		focus: mockData
-		head: mockData
-	render: -> TreeNode
-		changeCallback: (newValue) =>
-			if @state.focus?
-				@state.focus.setValue newValue
-				return true
-			return false
-		toggleCollapsedCallback: =>
-			if @state.focus.getCollapsed()
-				@state.focus.setCollapsed false
-			else
-				@state.focus.setCollapsed true
-		addChildCallback: =>
-			newTree = @state.focus.addSubTree ''
-			@setState({focus: newTree})
-			return true
-		addSiblingCallback: =>
-			if @state.focus.parent?
-				newTree = @state.focus.parent.addSubTree ''
-				@setState({focus: newTree})
-				return true
-			return false
-		focusCallback: (newFocus) =>
-			@setState({focus: newFocus})
-			return true
-		setHeadCallback: =>
-			@setState({head: @state.focus})
-		ascendCallback: =>
-			if @state.focus.parent?
-				if @state.focus == @state.head
-					@setState({head: @state.head.parent})
-				@setState({focus: @state.focus.parent})
-				return true
-			return false
-		descendCallback: =>
-			if @state.focus.subtrees.length
-				if @state.focus.getCollapsed()
-					@state.focus.setCollapsed false
-				@setState({focus: @state.focus.subtrees[0]})
-				return true
-			return false
-		rightSiblingCallback: =>
-			if @state.focus.parent?
-				oldIndex = @state.focus.parent.subtrees.indexOf(@state.focus)
-				if @state.focus.parent.subtrees.length > (oldIndex + 1)
-					@setState({focus: @state.focus.parent.subtrees[oldIndex + 1]})
-					return true
-			return false
-		leftSiblingCallback: =>
-			if @state.focus.parent?
-				oldIndex = @state.focus.parent.subtrees.indexOf(@state.focus)
-				if oldIndex > 0
-					@setState({focus: @state.focus.parent.subtrees[oldIndex - 1]})
-					return true
-			return false
-		deleteCallback: =>
-			if @state.focus.parent? and not @state.focus.subtrees.length
-				focus = @state.focus
-				parent = @state.focus.parent
-
-				oldIndex = parent.subtrees.indexOf(focus)
-				if oldIndex > 0
-					@setState({focus: parent.subtrees[oldIndex - 1]})
-				else
-					@setState({focus: parent})
-
-				parent.deleteSubTree(focus)
-				return true
-			return false
-		onBlur: (e) =>
-			if e.relatedTarget is null
-				@setState({focus: null})
-
-		showEtc: @state.head != @state.root
-		focus: @state.focus
-		root: @state.head
 
 Line = React.createClass
 	getAngle: ->
@@ -180,7 +92,6 @@ Square = React.createClass
 		}
 	,
 		@props.children
-
 
 TreeLabel = React.createClass
 	displayName: 'TreeLabel'
@@ -378,7 +289,6 @@ TreeNode = React.createClass
 							verticalOffset: 20 + @getRadiusFromValue(@props.root.value) * 2 
 							parentWidth: @getThisWidth()
 							parentRadius: @getRadiusFromValue(@props.root.value)
-					
 
 ListNode = React.createClass
 	render: -> ra.li null,
@@ -389,5 +299,97 @@ ListNode = React.createClass
 					value: subtree.value
 					subtrees: subtree.subtrees or []
 
-$(document).ready ->
-	mockData.callback()
+
+OakTree = (id) ->
+	mockData = new TreeState
+		value: ''
+		callback: -> React.renderComponent(Tree(null), document.getElementById('content'))
+
+	Tree = React.createClass
+		getInitialState: ->
+			root: mockData
+			focus: mockData
+			head: mockData
+		render: -> TreeNode
+			changeCallback: (newValue) =>
+				if @state.focus?
+					@state.focus.setValue newValue
+					return true
+				return false
+			toggleCollapsedCallback: =>
+				if @state.focus.getCollapsed()
+					@state.focus.setCollapsed false
+				else
+					@state.focus.setCollapsed true
+			addChildCallback: =>
+				newTree = @state.focus.addSubTree ''
+				@setState({focus: newTree})
+				return true
+			addSiblingCallback: =>
+				if @state.focus.parent?
+					newTree = @state.focus.parent.addSubTree ''
+					@setState({focus: newTree})
+					return true
+				return false
+			focusCallback: (newFocus) =>
+				@setState({focus: newFocus})
+				return true
+			setHeadCallback: =>
+				@setState({head: @state.focus})
+			ascendCallback: =>
+				if @state.focus.parent?
+					if @state.focus == @state.head
+						@setState({head: @state.head.parent})
+					@setState({focus: @state.focus.parent})
+					return true
+				return false
+			descendCallback: =>
+				if @state.focus.subtrees.length
+					if @state.focus.getCollapsed()
+						@state.focus.setCollapsed false
+					@setState({focus: @state.focus.subtrees[0]})
+					return true
+				return false
+			rightSiblingCallback: =>
+				if @state.focus.parent?
+					oldIndex = @state.focus.parent.subtrees.indexOf(@state.focus)
+					if @state.focus.parent.subtrees.length > (oldIndex + 1)
+						@setState({focus: @state.focus.parent.subtrees[oldIndex + 1]})
+						return true
+				return false
+			leftSiblingCallback: =>
+				if @state.focus.parent?
+					oldIndex = @state.focus.parent.subtrees.indexOf(@state.focus)
+					if oldIndex > 0
+						@setState({focus: @state.focus.parent.subtrees[oldIndex - 1]})
+						return true
+				return false
+			deleteCallback: =>
+				if @state.focus.parent? and not @state.focus.subtrees.length
+					focus = @state.focus
+					parent = @state.focus.parent
+
+					oldIndex = parent.subtrees.indexOf(focus)
+					if oldIndex > 0
+						@setState({focus: parent.subtrees[oldIndex - 1]})
+					else
+						@setState({focus: parent})
+
+					parent.deleteSubTree(focus)
+					return true
+				return false
+			onBlur: (e) =>
+				if e.relatedTarget is null
+					@setState({focus: null})
+
+			showEtc: @state.head != @state.root
+			focus: @state.focus
+			root: @state.head
+
+	return mockData.callback
+
+window.onload = ->
+  callback = OakTree('content')
+  callback()
+
+
