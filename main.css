@@ -1,5 +1,6 @@
 .circle {
 	border: 1px solid #333333;
+	cursor: pointer;
 }
 
 li {
@@ -15,4 +16,20 @@ ul {
 	height: 500px;
 	margin: auto;
 	position: relative;
+}
+
+input {
+	outline: none;
+	cursor: pointer;
+}
+input:focus {
+	cursor: text;
+}
+
+#textTest {
+    position: absolute;
+    visibility: hidden;
+    height: auto;
+    width: auto;
+    white-space: nowrap;
 }

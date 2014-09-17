@@ -19,7 +19,7 @@ class TreeState
 	deleteSubTree: (subtree) =>
 		indexToDelete = @subtrees.indexOf(subtree)
 		if indexToDelete?
-			@subtrees.splice(indexToDelete, indexToDelete + 1)
+			@subtrees.splice(indexToDelete, 1)
 
 
 mockData = new TreeState
@@ -31,41 +31,68 @@ Tree = React.createClass
 		root: mockData
 		focus: mockData
 	render: -> TreeNode
-		changeCallback: @state.focus.setValue
+		changeCallback: (newValue) =>
+			if @state.focus?
+				@state.focus.setValue newValue
+				return true
+			return false
 		addChildCallback: =>
 			newTree = @state.focus.addSubTree ''
 			@setState({focus: newTree})
+			return true
 		addSiblingCallback: =>
 			if @state.focus.parent?
 				newTree = @state.focus.parent.addSubTree ''
 				@setState({focus: newTree})
+				return true
+			return false
 		focusCallback: (newFocus) =>
 			@setState({focus: newFocus})
+			return true
 		ascendCallback: =>
 			if @state.focus.parent?
 				@setState({focus: @state.focus.parent})
+				return true
+			return false
 		descendCallback: =>
 			if @state.focus.subtrees.length
 				@setState({focus: @state.focus.subtrees[0]})
+				return true
+			return false
 		rightSiblingCallback: =>
 			if @state.focus.parent?
 				oldIndex = @state.focus.parent.subtrees.indexOf(@state.focus)
 				if @state.focus.parent.subtrees.length > (oldIndex + 1)
 					@setState({focus: @state.focus.parent.subtrees[oldIndex + 1]})
+					return true
+			return false
 		leftSiblingCallback: =>
 			if @state.focus.parent?
 				oldIndex = @state.focus.parent.subtrees.indexOf(@state.focus)
 				if oldIndex > 0
 					@setState({focus: @state.focus.parent.subtrees[oldIndex - 1]})
+					return true
+			return false
 		deleteCallback: =>
-			if @state.focus.parent?
+			if @state.focus.parent? and not @state.focus.subtrees.length
+				focus = @state.focus
 				parent = @state.focus.parent
-				parent.deleteSubTree(@state.focus)
-				@setState({focus: parent})
+
+				oldIndex = parent.subtrees.indexOf(focus)
+				if oldIndex > 0
+					@setState({focus: parent.subtrees[oldIndex - 1]})
+				else
+					@setState({focus: parent})
+
+				parent.deleteSubTree(focus)
+				return true
+			return false
+		onBlur: (e) =>
+			if e.relatedTarget is null
+				@setState({focus: null})
 
 		root: @state.root
 		focus: @state.focus
-		id: @state.root.id
 
 Line = React.createClass
 	getAngle: ->
@@ -107,9 +134,13 @@ Circle = React.createClass
 	componentDidMount: ->
 		@componentDidUpdate()
 	componentDidUpdate: ->
-		if @props.focus
+		if @props.hasFocus
 			@getDOMNode().children[0].focus()
 	render: ->
+		if @props.hasFocus
+			backgroundColor = '#afa'
+		else
+			backgroundColor = '#fff'
 		return @transferPropsTo ra.div
 			className: 'circle',
 			style: {
@@ -118,16 +149,28 @@ Circle = React.createClass
 				borderRadius: @props.radius
 				width: 2 * @props.radius
 				height: 2 * @props.radius
-				backgroundColor: 'white'
+				backgroundColor: backgroundColor
 				textAlign: 'center'
 			}
+			onClick: (e) =>
+				e.currentTarget.children[0].focus()
 			onKeyDown: (e) =>
 				switch e.key
-					when 'Enter' then @props.addChildCallback()
+					when 'Enter'
+						if e.shiftKey
+							@props.addChildCallback()
+						else
+							if not @props.descendCallback()
+								if not @props.rightSiblingCallback()
+									@props.addChildCallback()
 					when 'Escape' then @props.ascendCallback()
 					when 'Tab'
 						e.preventDefault()
-						@props.addSiblingCallback()
+						if e.shiftKey
+							@props.addSiblingCallback()
+						else
+							if not @props.rightSiblingCallback()
+								@props.addSiblingCallback()
 					when 'ArrowDown' then @props.descendCallback()
 					when 'ArrowUp' then @props.ascendCallback()
 					when 'ArrowRight'
@@ -137,6 +180,10 @@ Circle = React.createClass
 						e.preventDefault()
 						@props.leftSiblingCallback()
 					when 'Backspace'
+						if e.shiftKey
+							e.preventDefault()
+							if not @props.leftSiblingCallback()
+								@props.ascendCallback()
 						if not @props.children
 							@props.deleteCallback()
 
@@ -149,17 +196,20 @@ Circle = React.createClass
 					textAlign: 'center'
 					marginTop: @props.radius - 7
 					border: 'none'
+					backgroundColor: backgroundColor
 				onChange: (e) =>
 					newValue = e.currentTarget.value
 					@props.changeCallback newValue
 
 TreeNode = React.createClass
 	getDefaultProps: ->
-		parentWidth: 1 
-		parentRadius: 1
+		parentWidth: 0 
+		parentRadius: 0
 		offset: 0 
 	getRadiusFromValue: (value) ->
-		return value.length * 3 + 15
+		test = document.getElementById('textTest')
+		test.innerHTML = value
+		return Math.max((test.clientWidth + 5) / 2, 15)
 	getWidth: (tree) ->
 		byItself = @getRadiusFromValue(tree.value) * 2 + 4
 		if not tree.subtrees.length
@@ -194,8 +244,12 @@ TreeNode = React.createClass
 	getCircleOffset: -> @getThisWidth() / 2 - @getRadiusFromValue(@props.root.value)
 
 	render: ->
+		if @props.focus?
+			hasFocus = @props.focus.id == @props.root.id
+		else
+			hasFocus = false
 		offset = 0
-		return ra.li
+		return @transferPropsTo ra.li
 			style:
 				position: 'absolute'
 				top: @props.verticalOffset
@@ -223,7 +277,7 @@ TreeNode = React.createClass
 				deleteCallback: @props.deleteCallback
 				onFocus: =>
 					@props.focusCallback @props.root
-				focus: @props.focus.id == @props.root.id
+				hasFocus: hasFocus
 			, @props.root.value
 			ra.ul null,
 				for subtree in @props.root.subtrees
