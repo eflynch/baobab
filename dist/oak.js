@@ -1,29 +1,34 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({"./src/oak.coffee":[function(require,module,exports){
-var Circle, Line, ListNode, OakTree, React, Square, TreeLabel, TreeNode, TreeState, ra,
+var Circle, Line, ListNode, OakTree, React, Rectangle, Square, TreeLabel, TreeNode, TreeState, Triangle, id, ra,
   __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
 
 React = require('react');
 
 ra = React.DOM;
 
+id = 0;
+
 TreeState = (function() {
   function TreeState(_arg) {
-    this.value = _arg.value, this.callback = _arg.callback, this.parent = _arg.parent;
+    this.value = _arg.value, this.callback = _arg.callback, this.parent = _arg.parent, this.type = _arg.type;
     this.deleteSubTree = __bind(this.deleteSubTree, this);
     this.addSubTree = __bind(this.addSubTree, this);
     this.setValue = __bind(this.setValue, this);
-    this.setCollapsed = __bind(this.setCollapsed, this);
+    this.setElectivelyCollapsed = __bind(this.setElectivelyCollapsed, this);
     this.subtrees = [];
-    this.id = Math.round(Math.random() * 100000);
+    this.id = "" + id;
+    id += 1;
     this.collapsed = false;
+    this.width = null;
   }
 
-  TreeState.prototype.setCollapsed = function(newValue) {
+  TreeState.prototype.setElectivelyCollapsed = function(newValue) {
     this.collapsed = newValue;
+    this.soil();
     this.callback();
   };
 
-  TreeState.prototype.getCollapsed = function() {
+  TreeState.prototype.getElectivelyCollapsed = function() {
     if (this.subtrees.length) {
       return this.collapsed;
     }
@@ -33,16 +38,20 @@ TreeState = (function() {
 
   TreeState.prototype.setValue = function(newValue) {
     this.value = newValue;
+    this.soil();
     this.callback();
   };
 
-  TreeState.prototype.addSubTree = function(value, sibling, relation) {
+  TreeState.prototype.addSubTree = function(value, sibling, relation, type) {
     var insertIndex, newTree;
     if (sibling == null) {
       sibling = null;
     }
     if (relation == null) {
       relation = null;
+    }
+    if (type == null) {
+      type = null;
     }
     if (sibling != null) {
       if (relation === 'right') {
@@ -54,12 +63,17 @@ TreeState = (function() {
     } else {
       insertIndex = this.subtrees.length;
     }
+    if (type == null) {
+      type = this.type;
+    }
     newTree = new TreeState({
       value: value,
       callback: this.callback,
-      parent: this
+      parent: this,
+      type: type
     });
     this.subtrees.splice(insertIndex, 0, newTree);
+    this.soil();
     this.callback();
     return newTree;
   };
@@ -68,15 +82,78 @@ TreeState = (function() {
     var indexToDelete;
     indexToDelete = this.subtrees.indexOf(subtree);
     if (indexToDelete != null) {
-      return this.subtrees.splice(indexToDelete, 1);
+      this.subtrees.splice(indexToDelete, 1);
+    }
+    this.soil();
+    return this.callback();
+  };
+
+  TreeState.prototype.getWidth = function(collapsed) {
+    var byItself, subtree, total, _i, _len, _ref;
+    if (collapsed == null) {
+      collapsed = false;
+    }
+    if (collapsed) {
+      this.width = this.getLabelWidth() + 4;
+      return this.width;
+    }
+    if (this.width != null) {
+      return this.width;
+    }
+    byItself = this.getLabelWidth() + 4;
+    total = 0;
+    _ref = this.subtrees;
+    for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+      subtree = _ref[_i];
+      total += subtree.getWidth();
+    }
+    if (total > byItself) {
+      this.width = total;
+      return total;
+    }
+    this.width = byItself;
+    return byItself;
+  };
+
+  TreeState.prototype.getDistanceToAncestor = function(ancestor) {
+    if (ancestor === this) {
+      return 0;
+    } else {
+      return 1 + this.parent.getDistanceToAncestor(ancestor);
     }
   };
 
-  TreeState.prototype.getWidth = function() {};
+  TreeState.prototype.getNearerAncestor = function(ancestor, nearNess) {
+    if (ancestor === this) {
+      return ancestor;
+    }
+    if (nearNess === 0) {
+      return this;
+    }
+    return this.parent.getNearerAncestor(ancestor, nearNess - 1);
+  };
 
-  TreeState.prototype.getRadius = function() {};
+  TreeState.prototype.soil = function() {
+    this.width = null;
+    if (this.parent != null) {
+      return this.parent.soil();
+    }
+  };
 
-  TreeState.prototype.getHeight = function() {};
+  TreeState.prototype.getLabelWidth = function() {
+    return Math.max(this.value.length * 4 + 1, 16) * 2;
+  };
+
+  TreeState.prototype.getLabelHeight = function() {
+    switch (this.type) {
+      case 'rectangle':
+        return 25;
+      case 'circle':
+        return this.getLabelWidth();
+      case 'triangle':
+        return this.getLabelWidth();
+    }
+  };
 
   return TreeState;
 
@@ -132,13 +209,44 @@ Circle = React.createClass({
   displayName: 'Circle',
   render: function() {
     return this.transferPropsTo(ra.div({
-      className: 'circle',
+      className: 'label',
       style: {
         position: 'absolute',
         left: this.props.left,
-        borderRadius: this.props.radius,
-        width: 2 * this.props.radius,
-        height: 2 * this.props.radius
+        borderRadius: this.props.width / 2,
+        width: this.props.width,
+        height: this.props.width
+      }
+    }, this.props.children));
+  }
+});
+
+Rectangle = React.createClass({
+  displayName: 'Rectangle',
+  render: function() {
+    return this.transferPropsTo(ra.div({
+      className: 'label',
+      style: {
+        position: 'absolute',
+        left: this.props.left,
+        borderRadius: 5,
+        width: this.props.width,
+        height: this.props.height
+      }
+    }, this.props.children));
+  }
+});
+
+Triangle = React.createClass({
+  displayName: 'Triangle',
+  render: function() {
+    return this.transferPropsTo(ra.div({
+      className: 'label',
+      style: {
+        position: 'absolute',
+        left: this.props.left,
+        width: this.props.width,
+        height: this.props.height
       }
     }, this.props.children));
   }
@@ -148,12 +256,12 @@ Square = React.createClass({
   displayName: 'Square',
   render: function() {
     return this.transferPropsTo(ra.div({
-      className: 'circle',
+      className: 'label',
       style: {
         position: 'absolute',
         left: this.props.left,
-        width: 2 * this.props.radius,
-        height: 2 * this.props.radius
+        width: this.props.width,
+        height: this.props.width
       }
     }, this.props.children));
   }
@@ -171,16 +279,30 @@ TreeLabel = React.createClass({
   },
   render: function() {
     var backgroundColor, comp;
-    if (this.props.hasFocus) {
-      backgroundColor = '#afa';
-    } else {
-      backgroundColor = '#fff';
-    }
-    if (this.props.collapsed) {
-      comp = Square;
-    } else {
-      comp = Circle;
-    }
+    backgroundColor = (function() {
+      switch (false) {
+        case !(this.props.hasFocus && this.props.collapsed):
+          return '#8c8';
+        case !this.props.hasFocus:
+          return '#afa';
+        case !this.props.collapsed:
+          return '#888';
+        default:
+          return '#fff';
+      }
+    }).call(this);
+    comp = (function() {
+      switch (this.props.type) {
+        case 'circle':
+          return Circle;
+        case 'rectangle':
+          return Rectangle;
+        case 'triangle':
+          return Triangle;
+        case 'square':
+          return Square;
+      }
+    }).call(this);
     return this.transferPropsTo(comp({
       style: {
         position: 'absolute',
@@ -204,7 +326,7 @@ TreeLabel = React.createClass({
               return _this.props.setHeadCallback();
             case !(e.key === ' ' && shift):
               e.preventDefault();
-              return _this.props.toggleCollapsedCallback();
+              return _this.props.toggleElectivelyCollapsedCallback();
             case e.key !== 'Backspace':
               if (shift) {
                 e.preventDefault();
@@ -263,9 +385,9 @@ TreeLabel = React.createClass({
       value: this.props.children,
       style: {
         display: 'table-cell',
-        width: 2 * this.props.radius - 5,
+        width: this.props.width - 5,
         textAlign: 'center',
-        marginTop: this.props.radius - 7,
+        marginTop: this.props.height / 2 - 7,
         border: 'none',
         backgroundColor: backgroundColor
       },
@@ -281,90 +403,44 @@ TreeLabel = React.createClass({
 });
 
 TreeNode = React.createClass({
+  rendersCollapsed: function() {
+    return this.props.root.getElectivelyCollapsed() || (this.props.maxDepth < 0);
+  },
   getDefaultProps: function() {
     return {
-      parentWidth: 0,
-      parentRadius: 0,
-      offset: 0,
+      left: 0,
+      top: 0,
       showEtc: false
     };
-  },
-  getRadiusFromValue: function(value) {
-    return Math.max(value.length * 4 + 1, 16);
-  },
-  getWidth: function(tree) {
-    var byItself, subtree, total, _i, _len, _ref;
-    byItself = this.getRadiusFromValue(tree.value) * 2 + 4;
-    if (!tree.subtrees.length) {
-      return byItself;
-    }
-    total = 0;
-    _ref = tree.subtrees;
-    for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-      subtree = _ref[_i];
-      total += this.getWidth(subtree);
-    }
-    if (total > byItself) {
-      return total;
-    }
-    return byItself;
-  },
-  getThisWidth: function() {
-    return this.getWidth({
-      value: this.props.root.value,
-      subtrees: this.props.root.subtrees
-    });
-  },
-  getHeight: function(tree) {
-    var max, subtree, _i, _len, _ref;
-    if (!tree.subtrees.length) {
-      return 100;
-    }
-    max = 0;
-    _ref = tree.subtrees;
-    for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-      subtree = _ref[_i];
-      if (this.getHeight(subtree) > max) {
-        max = this.getHeight(subtree);
-      }
-    }
-    return max + 100;
-  },
-  getThisHeight: function() {
-    return this.getHeight({
-      value: this.props.root.value,
-      subtrees: this.props.root.subtrees
-    });
   },
   getLineValues: function() {
     return {
       startX: this.getCenter().x,
       startY: this.getCenter().y,
-      endX: this.props.parentWidth / 2 - this.props.offset,
-      endY: this.props.parentRadius - this.props.verticalOffset
+      endX: this.props.root.parent != null ? this.props.root.parent.getWidth() / 2 - this.props.left : void 0,
+      endY: this.props.root.parent != null ? this.props.root.parent.getLabelHeight() / 2 - this.props.top : void 0
     };
   },
   getCenter: function() {
     return {
-      x: this.getThisWidth() / 2,
-      y: this.getRadiusFromValue(this.props.root.value)
+      x: this.props.root.getWidth(this.rendersCollapsed()) / 2,
+      y: this.props.root.getLabelHeight() / 2
     };
   },
   render: function() {
-    var focusCallback, hasFocus, offset, subtree;
+    var focusCallback, hasFocus, left, subtree;
     if (this.props.focus != null) {
       hasFocus = this.props.focus.id === this.props.root.id;
     } else {
       hasFocus = false;
     }
-    offset = 0;
+    left = 0;
     return this.transferPropsTo(ra.li({
       style: {
         position: 'absolute',
-        top: this.props.verticalOffset,
-        left: "" + this.props.offset + "px",
-        width: "" + (this.getThisWidth()) + "px",
-        height: "" + (this.getThisHeight()) + "px"
+        top: this.props.top,
+        left: this.props.left,
+        width: "" + (this.props.root.getWidth(this.rendersCollapsed())) + "px"
       }
     }, this.props.root.parent != null ? !this.props.showEtc ? Line({
       width: '2px',
@@ -381,10 +457,14 @@ TreeNode = React.createClass({
       endX: this.getLineValues().startX,
       endY: -20
     }) : void 0, TreeLabel({
-      left: this.getCenter().x - this.getRadiusFromValue(this.props.root.value),
-      radius: this.getRadiusFromValue(this.props.root.value),
+      type: this.props.root.type,
+      left: this.getCenter().x - this.props.root.getLabelWidth() / 2,
+      width: this.props.root.getLabelWidth(),
+      height: this.props.root.getLabelHeight(),
+      hasFocus: hasFocus,
+      collapsed: this.rendersCollapsed(),
       changeCallback: this.props.changeCallback,
-      toggleCollapsedCallback: this.props.toggleCollapsedCallback,
+      toggleElectivelyCollapsedCallback: this.props.toggleElectivelyCollapsedCallback,
       addChildCallback: this.props.addChildCallback,
       addParentCallback: this.props.addParentCallback,
       addRightSiblingCallback: this.props.addRightSiblingCallback,
@@ -400,21 +480,24 @@ TreeNode = React.createClass({
           return _this.props.focusCallback(_this.props.root);
         };
       })(this),
-      setHeadCallback: this.props.setHeadCallback,
-      hasFocus: hasFocus,
-      collapsed: this.props.root.getCollapsed()
+      setHeadCallback: this.props.setHeadCallback
     }, this.props.root.value), ra.ul(null, (function() {
       var _i, _len, _ref, _results;
-      if (!this.props.root.getCollapsed()) {
+      if (!this.rendersCollapsed()) {
         _ref = this.props.root.subtrees;
         _results = [];
         for (_i = 0, _len = _ref.length; _i < _len; _i++) {
           subtree = _ref[_i];
-          offset += this.getWidth(subtree);
+          left += subtree.getWidth(this.rendersCollapsed());
           focusCallback = this.props.focusCallback;
           _results.push(TreeNode({
+            root: subtree,
+            focus: this.props.focus,
+            key: subtree.id,
+            left: left - subtree.getWidth(this.rendersCollapsed()),
+            top: 20 + this.props.root.getLabelHeight(),
             changeCallback: this.props.changeCallback,
-            toggleCollapsedCallback: this.props.toggleCollapsedCallback,
+            toggleElectivelyCollapsedCallback: this.props.toggleElectivelyCollapsedCallback,
             addChildCallback: this.props.addChildCallback,
             addParentCallback: this.props.addParentCallback,
             addRightSiblingCallback: this.props.addRightSiblingCallback,
@@ -427,13 +510,7 @@ TreeNode = React.createClass({
             leftSiblingCallback: this.props.leftSiblingCallback,
             deleteCallback: this.props.deleteCallback,
             forceDeleteCallback: this.props.forceDeleteCallback,
-            root: subtree,
-            focus: this.props.focus,
-            key: subtree.id,
-            offset: offset - this.getWidth(subtree),
-            verticalOffset: 20 + this.getRadiusFromValue(this.props.root.value) * 2,
-            parentWidth: this.getThisWidth(),
-            parentRadius: this.getRadiusFromValue(this.props.root.value)
+            maxDepth: this.props.maxDepth - 1
           }));
         }
         return _results;
@@ -462,23 +539,52 @@ ListNode = React.createClass({
 });
 
 OakTree = function(id) {
-  var Tree, mockData;
-  mockData = new TreeState({
+  var Tree, data;
+  data = new TreeState({
     value: '',
     callback: function() {
-      return React.renderComponent(Tree(null), document.getElementById('content'));
-    }
+      return React.renderComponent(Tree(null), document.getElementById(id));
+    },
+    type: 'circle'
   });
   Tree = React.createClass({
     getInitialState: function() {
       return {
-        root: mockData,
-        focus: mockData,
-        head: mockData
+        root: data,
+        focus: data,
+        head: data,
+        type: 'circle',
+        maxAncestor: 5
       };
     },
+    componentDidMount: function() {
+      return window.onkeydown = (function(_this) {
+        return function(e) {
+          var newType;
+          newType = (function() {
+            switch (this.state.type) {
+              case 'circle':
+                return 'rectangle';
+              case 'rectangle':
+                return 'triangle';
+              case 'triangle':
+                return 'circle';
+            }
+          }).call(_this);
+          if (e.keyCode === 191 && e.metaKey) {
+            return _this.setState({
+              type: newType
+            });
+          }
+        };
+      })(this);
+    },
     render: function() {
-      return TreeNode({
+      return ra.div({
+        style: {
+          position: 'relative'
+        }
+      }, TreeNode({
         changeCallback: (function(_this) {
           return function(newValue) {
             if (_this.state.focus != null) {
@@ -488,21 +594,24 @@ OakTree = function(id) {
             return false;
           };
         })(this),
-        toggleCollapsedCallback: (function(_this) {
+        toggleElectivelyCollapsedCallback: (function(_this) {
           return function() {
-            if (_this.state.focus.getCollapsed()) {
-              return _this.state.focus.setCollapsed(false);
+            if (_this.state.focus.getElectivelyCollapsed()) {
+              return _this.state.focus.setElectivelyCollapsed(false);
             } else {
-              return _this.state.focus.setCollapsed(true);
+              return _this.state.focus.setElectivelyCollapsed(true);
             }
           };
         })(this),
         addChildCallback: (function(_this) {
           return function() {
             var newTree;
-            newTree = _this.state.focus.addSubTree('');
+            newTree = _this.state.focus.addSubTree('', null, null, _this.state.type);
             _this.setState({
               focus: newTree
+            });
+            _this.setState({
+              head: _this.state.focus.getNearerAncestor(_this.state.head, _this.state.maxAncestor)
             });
             return true;
           };
@@ -513,7 +622,8 @@ OakTree = function(id) {
             if (_this.state.focus.parent == null) {
               newTree = new TreeState({
                 value: '',
-                callback: _this.state.root.callback
+                callback: _this.state.root.callback,
+                type: _this.state.type
               });
               newTree.subtrees.push(_this.state.root);
               _this.state.root.parent = newTree;
@@ -528,8 +638,8 @@ OakTree = function(id) {
         addLeftSiblingCallback: (function(_this) {
           return function() {
             var newTree;
-            if (_this.state.focus.parent != null) {
-              newTree = _this.state.focus.parent.addSubTree('', _this.state.focus, 'right');
+            if (_this.state.focus !== _this.state.head) {
+              newTree = _this.state.focus.parent.addSubTree('', _this.state.focus, 'right', _this.state.type);
               _this.setState({
                 focus: newTree
               });
@@ -541,8 +651,8 @@ OakTree = function(id) {
         addRightSiblingCallback: (function(_this) {
           return function() {
             var newTree;
-            if (_this.state.focus.parent != null) {
-              newTree = _this.state.focus.parent.addSubTree('', _this.state.focus, 'left');
+            if (_this.state.focus !== _this.state.head) {
+              newTree = _this.state.focus.parent.addSubTree('', _this.state.focus, 'left', _this.state.type);
               _this.setState({
                 focus: newTree
               });
@@ -555,6 +665,9 @@ OakTree = function(id) {
           return function(newFocus) {
             _this.setState({
               focus: newFocus
+            });
+            _this.setState({
+              head: _this.state.focus.getNearerAncestor(_this.state.head, _this.state.maxAncestor)
             });
             return true;
           };
@@ -585,11 +698,14 @@ OakTree = function(id) {
         descendCallback: (function(_this) {
           return function() {
             if (_this.state.focus.subtrees.length) {
-              if (_this.state.focus.getCollapsed()) {
-                _this.state.focus.setCollapsed(false);
+              if (_this.state.focus.getElectivelyCollapsed()) {
+                _this.state.focus.setElectivelyCollapsed(false);
               }
               _this.setState({
                 focus: _this.state.focus.subtrees[0]
+              });
+              _this.setState({
+                head: _this.state.focus.getNearerAncestor(_this.state.head, _this.state.maxAncestor)
               });
               return true;
             }
@@ -599,7 +715,7 @@ OakTree = function(id) {
         rightSiblingCallback: (function(_this) {
           return function() {
             var oldIndex;
-            if (_this.state.focus.parent != null) {
+            if (_this.state.focus !== _this.state.head) {
               oldIndex = _this.state.focus.parent.subtrees.indexOf(_this.state.focus);
               if (_this.state.focus.parent.subtrees.length > (oldIndex + 1)) {
                 _this.setState({
@@ -614,7 +730,7 @@ OakTree = function(id) {
         leftSiblingCallback: (function(_this) {
           return function() {
             var oldIndex;
-            if (_this.state.focus.parent != null) {
+            if (_this.state.focus !== _this.state.head) {
               oldIndex = _this.state.focus.parent.subtrees.indexOf(_this.state.focus);
               if (oldIndex > 0) {
                 _this.setState({
@@ -629,7 +745,7 @@ OakTree = function(id) {
         deleteCallback: (function(_this) {
           return function() {
             var focus, oldIndex, parent;
-            if ((_this.state.focus.parent != null) && !_this.state.focus.subtrees.length) {
+            if (_this.state.focus !== _this.state.root && !_this.state.focus.subtrees.length) {
               focus = _this.state.focus;
               parent = _this.state.focus.parent;
               oldIndex = parent.subtrees.indexOf(focus);
@@ -651,7 +767,7 @@ OakTree = function(id) {
         forceDeleteCallback: (function(_this) {
           return function() {
             var focus, oldIndex, parent;
-            if (_this.state.focus.parent != null) {
+            if (_this.state.focus !== _this.state.root) {
               focus = _this.state.focus;
               parent = _this.state.focus.parent;
               oldIndex = parent.subtrees.indexOf(focus);
@@ -681,11 +797,12 @@ OakTree = function(id) {
         })(this),
         showEtc: this.state.head !== this.state.root,
         focus: this.state.focus,
-        root: this.state.head
-      });
+        root: this.state.head,
+        maxDepth: this.state.maxAncestor
+      }));
     }
   });
-  return mockData.callback;
+  return data.callback;
 };
 
 window.onload = function() {

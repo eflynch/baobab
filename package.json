@@ -13,7 +13,8 @@
     "coffeeify": "^0.7.0",
     "jquery": "^2.1.1",
     "react": "^0.11.2",
-    "uglify-js": "^2.4.15"
+    "uglify-js": "^2.4.15",
+    "underscore": "^1.7.0"
   },
   "devDependencies": {
     "gulp": "^3.8.8",
