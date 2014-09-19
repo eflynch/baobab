@@ -1,17 +1,3 @@
-.label {
-	border: 1px solid #333333;
-	cursor: pointer;
-}
-
-li {
-	list-style: none;
-}
-
-ul {
-	padding-left: 0px;
-}
-
-
 #treeview {
 	height: 500px;
 	overflow: scroll;
@@ -21,21 +7,4 @@ ul {
 .textgroup {
 	margin-top: 10px;
 	float: left;
-}
-
-input {
-	outline: none;
-	cursor: pointer;
-	font-family: monospace;
-}
-input:focus {
-	cursor: text;
-}
-
-#textTest {
-    position: absolute;
-    visibility: hidden;
-    height: auto;
-    width: auto;
-    white-space: nowrap;
 }

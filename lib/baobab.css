@@ -1,0 +1,33 @@
+.label {
+	border: 1px solid #333333;
+	cursor: pointer;
+}
+
+li {
+	list-style: none;
+}
+
+ul {
+	padding-left: 0px;
+}
+
+
+input {
+	outline: none;
+	cursor: pointer;
+	font-family: monospace;
+}
+input:focus {
+	cursor: text;
+}
+
+textarea {
+	resize: none;
+	border: none;
+	outline: none;
+	cursor: pointer;
+	font-family: monospace;
+}
+textarea:focus {
+	cursor: text;
+}
