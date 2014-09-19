@@ -1,12 +1,13 @@
 {
-  "name": "oak",
+  "name": "baobab",
   "version": "0.0.0",
   "description": "Tool for Generating Tree Diagrams Easily",
-  "main": "dist/oak.js",
+  "main": "dist/baobab.js",
   "scripts": {
     "build": "npm install && browserify src/main.coffee -t coffeeify | uglifyjs > dist/main.js"
   },
   "author": "Evan Lynch",
+  "repository": "github.com/eflynch/baobab",
   "private": true,
   "dependencies": {
     "browserify": "^5.11.2",

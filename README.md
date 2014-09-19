@@ -1,4 +1,4 @@
-#Oak
+#Baobab
 Webtool for generating tree diagrams effortlessly
 
 ### Key Bindings

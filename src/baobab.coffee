@@ -369,7 +369,7 @@ TreeNode = React.createClass
 							cb: @props.cb
 							
 
-OakTree = React.createClass
+BaobabTree = React.createClass
 	getInitialState: ->
 		root: @props.initialRoot
 		focus: @props.initialRoot
@@ -521,6 +521,6 @@ OakTree = React.createClass
 				maxDepth: @state.maxAncestor
 
 module.exports =
-	OakTreeState: TreeState
-	OakTree: OakTree
+	BaobabTreeState: TreeState
+	BaobabTree: BaobabTree
 	treeStateFromJSON: treeStateFromJSON

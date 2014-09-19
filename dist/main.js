@@ -1,15 +1,15 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({"./src/main.coffee":[function(require,module,exports){
-var Oak, OakTree, React, TreeState, maxAncestor, treeStateFromJSON, type;
+var Baobab, BaobabTree, React, TreeState, maxAncestor, treeStateFromJSON, type;
 
-Oak = require('./oak.coffee');
+Baobab = require('./baobab.coffee');
 
 React = require('react');
 
-OakTree = Oak.OakTree;
+BaobabTree = Baobab.BaobabTree;
 
-TreeState = Oak.OakTreeState;
+TreeState = Baobab.BaobabTreeState;
 
-treeStateFromJSON = Oak.treeStateFromJSON;
+treeStateFromJSON = Baobab.treeStateFromJSON;
 
 window.onload = function() {
   var initialRoot, target, textSetter;
@@ -21,7 +21,7 @@ window.onload = function() {
   textSetter = function(string) {
     return document.getElementById('textOutput').value = string;
   };
-  React.renderComponent(OakTree({
+  React.renderComponent(BaobabTree({
     initialRoot: initialRoot,
     textSetter: textSetter
   }), target);
@@ -29,7 +29,7 @@ window.onload = function() {
     if (e.keyCode === 13) {
       e.preventDefault();
       initialRoot = treeStateFromJSON(e.currentTarget.value);
-      return React.renderComponent(OakTree({
+      return React.renderComponent(BaobabTree({
         initialRoot: initialRoot
       }), target);
     }
@@ -57,19 +57,19 @@ window.onkeydown = (function(_this) {
             return 'circle';
         }
       })();
-      React.renderComponent(OakTree({
+      React.renderComponent(BaobabTree({
         type: type
       }), target);
     }
     if (e.keyCode === 189 && e.ctrlKey) {
       maxAncestor = Math.max(maxAncestor - 1, 3);
-      React.renderComponent(OakTree({
+      React.renderComponent(BaobabTree({
         maxAncestor: maxAncestor
       }), target);
     }
     if (e.keyCode === 187 && e.ctrlKey) {
       maxAncestor = Math.min(maxAncestor + 1, 45);
-      return React.renderComponent(OakTree({
+      return React.renderComponent(BaobabTree({
         maxAncestor: maxAncestor
       }), target);
     }
@@ -78,7 +78,7 @@ window.onkeydown = (function(_this) {
 
 
 
-},{"./oak.coffee":"/Users/eflynch/things/oak/src/oak.coffee","react":"/Users/eflynch/things/oak/node_modules/react/react.js"}],"/Users/eflynch/things/oak/node_modules/browserify/node_modules/process/browser.js":[function(require,module,exports){
+},{"./baobab.coffee":"/Users/eflynch/things/oak/src/baobab.coffee","react":"/Users/eflynch/things/oak/node_modules/react/react.js"}],"/Users/eflynch/things/oak/node_modules/browserify/node_modules/process/browser.js":[function(require,module,exports){
 // shim for using process in browser
 
 var process = module.exports = {};
@@ -18734,8 +18734,8 @@ module.exports = warning;
 },{"./emptyFunction":"/Users/eflynch/things/oak/node_modules/react/lib/emptyFunction.js","_process":"/Users/eflynch/things/oak/node_modules/browserify/node_modules/process/browser.js"}],"/Users/eflynch/things/oak/node_modules/react/react.js":[function(require,module,exports){
 module.exports = require('./lib/React');
 
-},{"./lib/React":"/Users/eflynch/things/oak/node_modules/react/lib/React.js"}],"/Users/eflynch/things/oak/src/oak.coffee":[function(require,module,exports){
-var Circle, Line, OakTree, React, Rectangle, Square, TreeLabel, TreeNode, TreeState, Triangle, id, ra, treeStateFromJSON,
+},{"./lib/React":"/Users/eflynch/things/oak/node_modules/react/lib/React.js"}],"/Users/eflynch/things/oak/src/baobab.coffee":[function(require,module,exports){
+var BaobabTree, Circle, Line, React, Rectangle, Square, TreeLabel, TreeNode, TreeState, Triangle, id, ra, treeStateFromJSON,
   __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
 
 React = require('react');
@@ -19300,7 +19300,7 @@ TreeNode = React.createClass({
   }
 });
 
-OakTree = React.createClass({
+BaobabTree = React.createClass({
   getInitialState: function() {
     return {
       root: this.props.initialRoot,
@@ -19585,8 +19585,8 @@ OakTree = React.createClass({
 });
 
 module.exports = {
-  OakTreeState: TreeState,
-  OakTree: OakTree,
+  BaobabTreeState: TreeState,
+  BaobabTree: BaobabTree,
   treeStateFromJSON: treeStateFromJSON
 };
 
