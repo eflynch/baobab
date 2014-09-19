@@ -2,9 +2,10 @@
   "name": "baobab",
   "version": "0.0.0",
   "description": "Tool for Generating Tree Diagrams Easily",
-  "main": "dist/baobab.js",
+  "main": "baobab.js",
   "scripts": {
-    "build": "npm install && browserify src/main.coffee -t coffeeify | uglifyjs > dist/main.js"
+    "build": "npm install && browserify src/baobab.coffee -t coffeeify | uglifyjs > dist/baobab.js",
+    "buildWWW": "browserify src/main.coffee -t coffeeify | uglifyjs > dist/main_baobab.js" 
   },
   "author": "Evan Lynch",
   "repository": "github.com/eflynch/baobab",
