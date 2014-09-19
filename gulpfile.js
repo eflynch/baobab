@@ -8,10 +8,18 @@ var source       = require('vinyl-source-stream');
 
 var scriptsDir = './src';
 var buildDir = './dist';
-var entryPoint = 'main.coffee';
-var exitPoint = 'main.js';
+var entries = [
+  {
+    'entry': 'main.coffee',
+    'exit': 'main_baobab.js'
+  },
+  {
+    'entry': 'baobab.coffee',
+    'exit': 'baobab.js'
+  },
+]
 
-gulp.task('default', function() {
+var buildScript = function(entryPoint, exitPoint) {
   var bundler = watchify(browserify(scriptsDir + '/' + entryPoint, watchify.args));
 
   bundler.transform(coffeeify);
@@ -35,4 +43,10 @@ gulp.task('default', function() {
   }
 
   return rebundle();
+};
+
+gulp.task('default', function (){
+  for (var i=0; i< entries.length; i++){
+    buildScript(entries[i].entry, entries[i].exit);
+  }
 });
