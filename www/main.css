@@ -11,16 +11,16 @@ ul {
 	padding-left: 0px;
 }
 
-#content {
-/*	max-width: 900px;
-	width: 100%;
-	max-height: 700px;
-	height: 80%;
-	margin: auto;*/
-	position: relative;
-	/*overflow: scroll;*/
+
+#treeview {
+	height: 500px;
+	overflow: scroll;
 	padding: 20px;
-	/*border: 1px dotted #222;*/
+}
+
+.textgroup {
+	margin-top: 10px;
+	float: left;
 }
 
 input {

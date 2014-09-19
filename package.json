@@ -4,14 +4,13 @@
   "description": "Tool for Generating Tree Diagrams Easily",
   "main": "dist/oak.js",
   "scripts": {
-    "build": "npm install && browserify src/oak.coffee -t coffeeify | uglifyjs > dist/oak.js"
+    "build": "npm install && browserify src/main.coffee -t coffeeify | uglifyjs > dist/main.js"
   },
   "author": "Evan Lynch",
   "private": true,
   "dependencies": {
     "browserify": "^5.11.2",
     "coffeeify": "^0.7.0",
-    "jquery": "^2.1.1",
     "react": "^0.11.2",
     "uglify-js": "^2.4.15",
     "underscore": "^1.7.0"

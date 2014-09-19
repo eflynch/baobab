@@ -8,8 +8,8 @@ var source       = require('vinyl-source-stream');
 
 var scriptsDir = './src';
 var buildDir = './dist';
-var entryPoint = 'oak.coffee';
-var exitPoint = 'oak.js';
+var entryPoint = 'main.coffee';
+var exitPoint = 'main.js';
 
 gulp.task('default', function() {
   var bundler = watchify(browserify(scriptsDir + '/' + entryPoint, watchify.args));

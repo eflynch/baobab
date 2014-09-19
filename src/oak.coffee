@@ -1,71 +1,91 @@
 React = require('react')
 ra = React.DOM
 
+treeStateFromJSON = (string) ->
+	simpleObject = JSON.parse(string)
+	treeStateFromSimpleObject = (simpleObject, parent = null) ->
+		newTree = new TreeState
+			value: simpleObject.value
+			parent: parent
+			type: simpleObject.type
+		newTree.id = simpleObject.id
+		newTree.mutator().setCollapsed simpleObject.collapsed
+		for subObject in simpleObject.subtrees
+			newTree.subtrees.push treeStateFromSimpleObject(subObject, newTree)
+		return newTree
+	return treeStateFromSimpleObject simpleObject
+
+
 id = 0
 class TreeState
-	constructor: ({@value, @callback, @parent, @type}) ->
+	constructor: ({@value, @parent, @type}) ->
 		@subtrees = []
 		@id = "#{id}"
 		id += 1
 		@collapsed = false
 		@width = null
-	setElectivelyCollapsed: (newValue) =>
-		@collapsed = newValue
-		@soil()
-		@callback()
-		return
-	getElectivelyCollapsed: ->
-		if @subtrees.length
-			return @collapsed
-		@collapsed = false
-		return false
-	setValue: (newValue) =>
-		@value = newValue
-		@soil()
-		@callback()
-		return
-	addSubTree: (value, sibling = null, relation = null, type = null) =>
-		if sibling?
-			if relation == 'right'
-				insertIndex = @subtrees.indexOf(sibling)
-			if relation == 'left'
-				insertIndex = @subtrees.indexOf(sibling) + 1
-		else
-			insertIndex = @subtrees.length
-		if not type?
-			type = @type
-		newTree = new TreeState({value: value, callback: @callback, parent: this, type: type})
-		@subtrees.splice insertIndex, 0, newTree
-		@soil()
-		@callback()
-		return newTree
-	deleteSubTree: (subtree) =>
-		indexToDelete = @subtrees.indexOf(subtree)
-		if indexToDelete?
-			@subtrees.splice(indexToDelete, 1)
-		@soil()
-		@callback()
-	getWidth: (collapsed = false)->
-		if collapsed
-			@width = @getLabelWidth() + 4
-			return @width
+	mutator: =>
+		setCollapsed: (newValue) =>
+			@collapsed = newValue
+			if newValue == false
+				for subtree in @subtrees
+					subtree.mutator().setCollapsed false
+			@soil()
+			return
+		setValue: (newValue) =>
+			@value = newValue
+			@soil()
+			return
+		addSubTree: (value, sibling = null, relation = null, type = null) =>
+			if sibling?
+				if relation == 'right'
+					insertIndex = @subtrees.indexOf(sibling)
+				if relation == 'left'
+					insertIndex = @subtrees.indexOf(sibling) + 1
+			else
+				insertIndex = @subtrees.length
+			if not type?
+				type = @type
+			newTree = new TreeState({value: value, parent: this, type: type})
+			@subtrees.splice insertIndex, 0, newTree
+			@soil()
+			return newTree
+		deleteSubTree: (subtree) =>
+			indexToDelete = @subtrees.indexOf(subtree)
+			if indexToDelete?
+				@subtrees.splice(indexToDelete, 1)
+			@soil()
+		collapseYouth: (nearNess) =>
+			if not @subtrees.length
+				return true
+			if nearNess < 0
+				@mutator().setCollapsed true
+				return true
+			for subtree in @subtrees
+				subtree.mutator().collapseYouth (nearNess - 1)
+			return true
+	getCollapsed: ->
+		if not @subtrees.length
+			@collapsed = false
+			return false
+		if @collapsed
+			return true
+	getWidth: ->
 		if @width?
 			return @width
-		byItself = @getLabelWidth() + 4
+
+		@width = @getLabelWidth() + 4
+		if @collapsed
+			return @width
 		total = 0
 		for subtree in @subtrees
 			total += subtree.getWidth()
-		if total > byItself
+		if total > @width
 			@width = total
-			return total
-		@width = byItself
-		return byItself
-	getDistanceToAncestor: (ancestor) ->
-		if ancestor == this
-			return 0
-		else
-			return 1 + @parent.getDistanceToAncestor(ancestor)
+		return @width
 	getNearerAncestor: (ancestor, nearNess) ->
+		if not @parent?
+			return this
 		if ancestor == this
 			return ancestor
 		if nearNess == 0
@@ -75,14 +95,24 @@ class TreeState
 		@width = null
 		if @parent?
 			@parent.soil()
-
 	getLabelWidth: -> Math.max(@value.length * 4 + 1, 16) * 2
-
 	getLabelHeight: ->
 		return switch @type
 			when 'rectangle' then 25
 			when 'circle' then @getLabelWidth()
 			when 'triangle' then @getLabelWidth()
+			when 'square' then @getLabelWidth()
+	toJSON: ->
+		toSimpleObject = (tree) ->
+			value: tree.value
+			subtrees: toSimpleObject(subtree) for subtree in tree.subtrees
+			collapsed: tree.collapsed
+			id: tree.id
+			type: tree.type
+		return JSON.stringify toSimpleObject this
+
+
+			
 
 Line = React.createClass
 	getAngle: ->
@@ -93,7 +123,6 @@ Line = React.createClass
 			when deltaX > 0 and deltaY < 0 then Math.atan(deltaY / deltaX)
 			else Math.atan(deltaY / deltaX)
 		return 180 / Math.PI * theta
-
 	render: ->
 		angle = @getAngle()
 		left = @props.startX
@@ -121,7 +150,6 @@ Line = React.createClass
 
 Circle = React.createClass
 	displayName: 'Circle'
-
 	render: -> @transferPropsTo ra.div
 		className: 'label'
 		style: {
@@ -154,12 +182,11 @@ Triangle = React.createClass
 
 	render: -> @transferPropsTo ra.div
 		className: 'label'
-		style: {
+		style:
 			position: 'absolute'
 			left: @props.left
 			width: @props.width
 			height: @props.height
-		}
 	,
 		@props.children
 
@@ -168,12 +195,11 @@ Square = React.createClass
 
 	render: -> @transferPropsTo ra.div
 		className: 'label'
-		style: {
+		style:
 			position: 'absolute'
 			left: @props.left
 			width: @props.width
 			height: @props.width
-		}
 	,
 		@props.children
 
@@ -208,47 +234,54 @@ TreeLabel = React.createClass
 				ctrl = e.ctrlKey
 				meta = e.metaKey
 				switch
-					when e.key == 'Enter' and ctrl
-						@props.setHeadCallback()
+					when e.key == 'Enter' and shift
+						@props.cb.setHeadCallback()
 					when e.key == ' ' and shift
 						e.preventDefault()
-						@props.toggleElectivelyCollapsedCallback()
+						@props.cb.toggleElectivelyCollapsedCallback()
 					when e.key == 'Backspace'
 						if shift
 							e.preventDefault()
-							@props.forceDeleteCallback()
+							@props.cb.forceDeleteCallback()
 						else
 							if not @props.children
 								e.preventDefault()
-								@props.deleteCallback()
-					when (shift and e.key == 'ArrowLeft') or (e.key == 'Backspace' and ctrl)
+								@props.cb.deleteCallback()
+					when e.key == 'Enter'
+						e.preventDefault()
+						@props.cb.addChildCallback()
+					when e.key == 'Tab'
+						e.preventDefault()
+						@props.cb.addRightSiblingCallback()
+					when e.key == 'Escape'
+						e.preventDefault()
+						if not @props.cb.ascendCallback()
+							@props.cb.addParentCallback()
+					when (shift and e.key == 'ArrowLeft')
 						e.preventDefault()
 						if meta
-							@props.addLeftSiblingCallback()
+							@props.cb.addLeftSiblingCallback()
 						else
-							if not @props.leftSiblingCallback()
-								@props.addLeftSiblingCallback()
-					when (shift and e.key == 'ArrowRight') or e.key == 'Tab'
+							@props.cb.leftSiblingCallback()
+
+					when (shift and e.key == 'ArrowRight')
 						e.preventDefault()
 						if meta
-							@props.addRightSiblingCallback()
+							@props.cb.addRightSiblingCallback()
 						else
-							if not @props.rightSiblingCallback()
-								@props.addRightSiblingCallback()
-					when (shift and e.key == 'ArrowDown') or e.key == 'Enter'
+							@props.cb.rightSiblingCallback()
+					when (shift and e.key == 'ArrowDown')
 						e.preventDefault()
 						if meta
-							@props.addChildCallback()
+							@props.cb.addChildCallback()
 						else
-							if not @props.descendCallback()
-								@props.addChildCallback()
-					when (shift and e.key == 'ArrowUp') or e.key == 'Escape'
+							@props.cb.descendCallback()
+					when (shift and e.key == 'ArrowUp')
 						if meta
-							@props.addParentCallback()
+							@props.cb.addParentCallback()
 						else
 							e.preventDefault()
-							if not @props.ascendCallback()
-								@props.addParentCallback()
+							@props.cb.ascendCallback()
 		, ra.input
 				type: 'text'
 				value: @props.children
@@ -261,15 +294,14 @@ TreeLabel = React.createClass
 					backgroundColor: backgroundColor
 				onChange: (e) =>
 					newValue = e.currentTarget.value
-					@props.changeCallback newValue
+					@props.cb.changeCallback newValue
 
 TreeNode = React.createClass
-	
-	rendersCollapsed: -> (@props.root.getElectivelyCollapsed() or (@props.maxDepth < 0))
 	getDefaultProps: ->
 		left: 0 
 		top: 0
 		showEtc: false
+		collapsed: false
 
 	getLineValues: ->
 		startX: @getCenter().x
@@ -278,7 +310,7 @@ TreeNode = React.createClass
 		endY: @props.root.parent.getLabelHeight() / 2 - @props.top if @props.root.parent?
 
 	getCenter: ->
-		x: @props.root.getWidth(@rendersCollapsed()) / 2
+		x: @props.root.getWidth() / 2
 		y: @props.root.getLabelHeight() / 2
 
 	render: ->
@@ -286,14 +318,12 @@ TreeNode = React.createClass
 			hasFocus = @props.focus.id == @props.root.id
 		else
 			hasFocus = false
-		left = 0
-
 		return @transferPropsTo ra.li
 			style:
 				position: 'absolute'
 				top: @props.top
 				left: @props.left
-				width: "#{@props.root.getWidth(@rendersCollapsed())}px"
+				width: "#{@props.root.getWidth()}px"
 		,
 			if @props.root.parent?
 				if not @props.showEtc
@@ -318,193 +348,169 @@ TreeNode = React.createClass
 				width: @props.root.getLabelWidth()
 				height: @props.root.getLabelHeight()
 				hasFocus: hasFocus
-				collapsed: @rendersCollapsed()
-				# Callbacks
-				changeCallback: @props.changeCallback
-				toggleElectivelyCollapsedCallback: @props.toggleElectivelyCollapsedCallback
-				addChildCallback: @props.addChildCallback
-				addParentCallback: @props.addParentCallback
-				addRightSiblingCallback: @props.addRightSiblingCallback
-				addLeftSiblingCallback: @props.addLeftSiblingCallback
-				ascendCallback: @props.ascendCallback
-				descendCallback: @props.descendCallback
-				rightSiblingCallback: @props.rightSiblingCallback
-				leftSiblingCallback: @props.leftSiblingCallback
-				deleteCallback: @props.deleteCallback
-				forceDeleteCallback: @props.forceDeleteCallback
+				collapsed: @props.root.getCollapsed()
+				cb: @props.cb
 				onFocus: =>
-					@props.focusCallback @props.root
-				setHeadCallback: @props.setHeadCallback
+					@props.cb.focusCallback @props.root
 
 			, @props.root.value
 			ra.ul null,
-				if not @rendersCollapsed()
+				if not @props.root.getCollapsed()
+					leftAccumulator = 0
 					for subtree in @props.root.subtrees
-						left += subtree.getWidth(@rendersCollapsed())
-						focusCallback = @props.focusCallback
+						leftAccumulator += subtree.getWidth()
 						TreeNode
 							root: subtree
 							focus: @props.focus
 							key: subtree.id
-							left: left - subtree.getWidth(@rendersCollapsed())
+							left: leftAccumulator - subtree.getWidth()
 							top: 20 + @props.root.getLabelHeight()
-							# Callbacks
-							changeCallback: @props.changeCallback
-							toggleElectivelyCollapsedCallback: @props.toggleElectivelyCollapsedCallback
-							addChildCallback: @props.addChildCallback
-							addParentCallback: @props.addParentCallback
-							addRightSiblingCallback: @props.addRightSiblingCallback
-							addLeftSiblingCallback: @props.addLeftSiblingCallback
-							focusCallback: @props.focusCallback
-							setHeadCallback: @props.setHeadCallback
-							ascendCallback: @props.ascendCallback
-							descendCallback: @props.descendCallback
-							rightSiblingCallback: @props.rightSiblingCallback
-							leftSiblingCallback: @props.leftSiblingCallback
-							deleteCallback: @props.deleteCallback
-							forceDeleteCallback: @props.forceDeleteCallback
 							maxDepth: @props.maxDepth - 1
+							cb: @props.cb
 							
 
-ListNode = React.createClass
-	render: -> ra.li null,
-		ra.p null, @props.value
-		ra.ul null,
-			for subtree in @props.subtrees
-				ListNode
-					value: subtree.value
-					subtrees: subtree.subtrees or []
-
-
-OakTree = (id) ->
-	data = new TreeState
-		value: ''
-		callback: -> React.renderComponent(Tree(null), document.getElementById(id))
+OakTree = React.createClass
+	getInitialState: ->
+		root: @props.initialRoot
+		focus: @props.initialRoot
+		head: @props.initialRoot
+		textSetter: @props.textSetter
 		type: 'circle'
+		maxAncestor: 6
 
-	Tree = React.createClass
-		getInitialState: ->
-			root: data
-			focus: data
-			head: data
-			type: 'circle'
-			maxAncestor: 5
+	componentWillReceiveProps: (nextProps) ->
+		if nextProps.initialRoot?
+			@setState
+				root: nextProps.initialRoot
+				focus: nextProps.initialRoot
+				head: nextProps.initialRoot
+		if nextProps.type?
+			@setState({type: nextProps.type})
+		if nextProps.maxAncestor?
+			@setState({maxAncestor: nextProps.maxAncestor})
+		if nextProps.textSetter?
+			@setState({textSetter: nextProps.textSetter})
 
-		componentDidMount: ->
-			window.onkeydown = (e) =>
-				newType = switch @state.type
-					when 'circle' then 'rectangle'
-					when 'rectangle' then 'triangle'
-					when 'triangle' then 'circle'
-				if e.keyCode == 191 and e.metaKey
-					@setState({type: newType})
-		render: -> ra.div
-			style:
-				position: 'relative'
-			, TreeNode
-				changeCallback: (newValue) =>
-					if @state.focus?
-						@state.focus.setValue newValue
-						return true
-					return false
-				toggleElectivelyCollapsedCallback: =>
-					if @state.focus.getElectivelyCollapsed()
-						@state.focus.setElectivelyCollapsed false
-					else
-						@state.focus.setElectivelyCollapsed true
-				addChildCallback: =>
-					newTree = @state.focus.addSubTree('', null, null, @state.type)
-					@setState({focus: newTree})
-					@setState({head: @state.focus.getNearerAncestor(@state.head, @state.maxAncestor)})
-					return true
-				addParentCallback: =>
-					if not @state.focus.parent?
-						newTree = new TreeState
-							value: ''
-							callback: @state.root.callback
-							type: @state.type
-						newTree.subtrees.push(@state.root)
-						@state.root.parent = newTree
-						@setState
-							root: newTree
-							focus: newTree
-							head: newTree
-				addLeftSiblingCallback: =>
-					if @state.focus != @state.head
-						newTree = @state.focus.parent.addSubTree '', @state.focus, 'right', @state.type
-						@setState({focus: newTree})
-						return true
-					return false
-				addRightSiblingCallback: =>
-					if @state.focus != @state.head
-						newTree = @state.focus.parent.addSubTree '', @state.focus, 'left', @state.type
-						@setState({focus: newTree})
-						return true
-					return false
+	componentDidUpdate: ->
+		if @state.textSetter?
+			@state.textSetter @state.root.toJSON()
 
-				focusCallback: (newFocus) =>
-					@setState({focus: newFocus})
-					@setState({head: @state.focus.getNearerAncestor(@state.head, @state.maxAncestor)})
-					return true
-				setHeadCallback: =>
-					@setState({head: @state.focus})
-				ascendCallback: =>
-					if @state.focus.parent?
-						if @state.focus == @state.head
-							@setState({head: @state.head.parent})
-						@setState({focus: @state.focus.parent})
-						return true
-					return false
-				descendCallback: =>
-					if @state.focus.subtrees.length
-						if @state.focus.getElectivelyCollapsed()
-							@state.focus.setElectivelyCollapsed false
-						@setState({focus: @state.focus.subtrees[0]})
-						@setState({head: @state.focus.getNearerAncestor(@state.head, @state.maxAncestor)})
-						return true
-					return false
-				rightSiblingCallback: =>
-					if @state.focus != @state.head
-						oldIndex = @state.focus.parent.subtrees.indexOf(@state.focus)
-						if @state.focus.parent.subtrees.length > (oldIndex + 1)
-							@setState({focus: @state.focus.parent.subtrees[oldIndex + 1]})
+	setHeadAndCollapseYouth: (focus = null, head = null) ->
+		focus ?= @state.focus
+		head ?= @state.head
+		head.mutator().collapseYouth @state.maxAncestor
+		@setState
+			head: focus.getNearerAncestor(head, @state.maxAncestor)
+
+	render: -> ra.div
+		style:
+			position: 'relative'
+		,
+			TreeNode
+				cb:
+					changeCallback: (newValue) =>
+						if @state.focus?
+							@state.focus.mutator().setValue newValue
+							@setState({focus: @state.focus})
 							return true
-					return false
-				leftSiblingCallback: =>
-					if @state.focus != @state.head
-						oldIndex = @state.focus.parent.subtrees.indexOf(@state.focus)
-						if oldIndex > 0
-							@setState({focus: @state.focus.parent.subtrees[oldIndex - 1]})
+						return false
+					toggleElectivelyCollapsedCallback: =>
+						if @state.focus.getCollapsed()
+							@state.focus.mutator().setCollapsed false
+						else
+							@state.focus.mutator().setCollapsed true
+						@setState({focus: @state.focus})
+					addChildCallback: =>
+						newTree = @state.focus.mutator().addSubTree('', null, null, @state.type)
+						@setState({focus: newTree})
+						@setHeadAndCollapseYouth()
+						return true
+					addParentCallback: =>
+						if not @state.focus.parent?
+							newTree = new TreeState
+								value: ''
+								type: @state.type
+							newTree.subtrees.push(@state.root)
+							@state.root.parent = newTree
+							@setHeadAndCollapseYouth newTree, newTree
+							@setState
+								root: newTree
+								focus: newTree
+								head: newTree
+					addLeftSiblingCallback: =>
+						if @state.focus != @state.head
+							newTree = @state.focus.parent.mutator().addSubTree '', @state.focus, 'right', @state.type
+							@setState({focus: newTree})
 							return true
-					return false
-				deleteCallback: =>
-					if @state.focus != @state.root and not @state.focus.subtrees.length
-						focus = @state.focus
-						parent = @state.focus.parent
+						return false
+					addRightSiblingCallback: =>
+						if @state.focus != @state.head
+							newTree = @state.focus.parent.mutator().addSubTree '', @state.focus, 'left', @state.type
+							@setState({focus: newTree})
+							return true
+						return false
 
-						oldIndex = parent.subtrees.indexOf(focus)
-						if oldIndex > 0
-							@setState({focus: parent.subtrees[oldIndex - 1]})
-						else
-							@setState({focus: parent})
-
-						parent.deleteSubTree(focus)
+					focusCallback: (newFocus) =>
+						@setState({focus: newFocus})
+						@setHeadAndCollapseYouth(newFocus)
 						return true
-					return false
-				forceDeleteCallback: =>
-					if @state.focus != @state.root
+					setHeadCallback: =>
+						if @state.focus.getCollapsed()
+							@state.focus.mutator().setCollapsed false
+						@setState({head: @state.focus})
+					ascendCallback: =>
+						if @state.focus.parent?
+							if @state.focus == @state.head
+								head = @state.head.parent
+							else
+								head = @state.head
+							focus = @state.focus.parent
+							@setState({focus: focus, head: head})
+							@setHeadAndCollapseYouth focus, head
+							return true
+						return false
+					descendCallback: =>
+						if @state.focus.subtrees.length
+							if @state.focus.getCollapsed()
+								@state.focus.mutator().setCollapsed false
+							@setState({focus: @state.focus.subtrees[0]})
+							@setHeadAndCollapseYouth()
+							return true
+						return false
+					rightSiblingCallback: =>
+						if @state.focus != @state.head
+							oldIndex = @state.focus.parent.subtrees.indexOf(@state.focus)
+							if @state.focus.parent.subtrees.length > (oldIndex + 1)
+								@setState({focus: @state.focus.parent.subtrees[oldIndex + 1]})
+								return true
+						return false
+					leftSiblingCallback: =>
+						if @state.focus != @state.head
+							oldIndex = @state.focus.parent.subtrees.indexOf(@state.focus)
+							if oldIndex > 0
+								@setState({focus: @state.focus.parent.subtrees[oldIndex - 1]})
+								return true
+						return false
+					deleteCallback: =>
+						if @state.focus != @state.root and not @state.focus.subtrees.length
+							focus = @state.focus
+							parent = @state.focus.parent
+
+							oldIndex = parent.subtrees.indexOf(focus)
+							if oldIndex > 0
+								@setState({focus: parent.subtrees[oldIndex - 1]})
+							else
+								@setState({focus: parent})
+
+							parent.mutator().deleteSubTree(focus)
+							return true
+						return false
+					forceDeleteCallback: =>
 						focus = @state.focus
-						parent = @state.focus.parent
-
-						oldIndex = parent.subtrees.indexOf(focus)
-						if oldIndex > 0
-							@setState({focus: parent.subtrees[oldIndex - 1]})
-						else
-							@setState({focus: parent})
-
-						parent.deleteSubTree(focus)
+						for subtree in @state.focus.subtrees
+							focus.mutator().deleteSubTree(subtree)
+						@setState({focus: focus})
 						return true
-					return false
 				onBlur: (e) =>
 					if e.relatedTarget is null
 						@setState({focus: null})
@@ -514,10 +520,7 @@ OakTree = (id) ->
 				root: @state.head
 				maxDepth: @state.maxAncestor
 
-	return data.callback
-
-window.onload = ->
-  callback = OakTree('content')
-  callback()
-
-
+module.exports =
+	OakTreeState: TreeState
+	OakTree: OakTree
+	treeStateFromJSON: treeStateFromJSON
