@@ -4,7 +4,7 @@
   "description": "Tool for Generating Tree Diagrams Easily",
   "main": "baobab.js",
   "scripts": {
-    "build": "npm install && browserify src/baobab.coffee -t coffeeify | uglifyjs > dist/baobab.js",
+    "build": "npm install && coffee -pc src/baobab.coffee | uglifyjs > baobab.js",
     "buildWWW": "browserify src/main.coffee -t coffeeify | uglifyjs > dist/main_baobab.js" 
   },
   "author": "Evan Lynch",

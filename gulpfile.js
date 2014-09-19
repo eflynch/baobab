@@ -13,14 +13,6 @@ var entries = [
     'entry': 'main.coffee',
     'exit': 'dist/main_baobab.js'
   },
-  {
-    'entry': 'baobab.coffee',
-    'exit': 'dist/baobab.js'
-  },
-  {
-    'entry': 'baobab.coffee',
-    'exit': 'baobab.js'
-  },
 ]
 
 var buildScript = function(entryPoint, exitPoint) {
