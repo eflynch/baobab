@@ -18919,20 +18919,53 @@ TreeState = (function() {
     }
   };
 
+  TreeState.prototype.getTextWidth = function() {
+    var line, lineLengths, maxLineLength;
+    lineLengths = [
+      (function() {
+        var _i, _len, _ref, _results;
+        _ref = this.value.split('\n');
+        _results = [];
+        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+          line = _ref[_i];
+          _results.push(line.length);
+        }
+        return _results;
+      }).call(this)
+    ][0];
+    maxLineLength = Math.max.apply(null, lineLengths);
+    return Math.max(maxLineLength * 7, 1);
+  };
+
+  TreeState.prototype.getTextHeight = function() {
+    var numLines;
+    numLines = this.value.split('\n').length;
+    return numLines * 14;
+  };
+
   TreeState.prototype.getLabelWidth = function() {
-    return Math.max(this.value.length * 4 + 1, 16) * 2;
+    switch (this.type) {
+      case 'rectangle':
+        return this.getTextWidth() + 10;
+      case 'circle':
+        return Math.max(this.getTextWidth(), this.getTextHeight()) * Math.sqrt(2);
+      case 'square':
+        return Math.max(this.getTextWidth() + 5, this.getTextHeight() + 5);
+      case 'triangle':
+        return Math.max(this.getTextWidth() + 5, this.getTextHeight() + 5);
+    }
   };
 
   TreeState.prototype.getLabelHeight = function() {
     switch (this.type) {
       case 'rectangle':
-        return 25;
+        return this.getTextHeight() + 10;
       case 'circle':
-        return this.getLabelWidth();
-      case 'triangle':
-        return this.getLabelWidth();
+        return Math.max(this.getTextWidth(), this.getTextHeight()) * Math.sqrt(2);
       case 'square':
-        return this.getLabelWidth();
+        return Math.max(this.getTextWidth() + 5, this.getTextHeight() + 5);
+      case 'triangle':
+        return Math.max(this.getTextWidth() + 5, this.getTextHeight() + 5);
     }
   };
 
@@ -19020,7 +19053,7 @@ Circle = React.createClass({
         left: this.props.left,
         borderRadius: this.props.width / 2,
         width: this.props.width,
-        height: this.props.width
+        height: this.props.height
       }
     }, this.props.children));
   }
@@ -19066,7 +19099,7 @@ Square = React.createClass({
         position: 'absolute',
         left: this.props.left,
         width: this.props.width,
-        height: this.props.width
+        height: this.props.height
       }
     }, this.props.children));
   }
@@ -19083,7 +19116,7 @@ TreeLabel = React.createClass({
     }
   },
   render: function() {
-    var backgroundColor, comp;
+    var backgroundColor, comp, textAlign;
     backgroundColor = (function() {
       switch (false) {
         case !(this.props.hasFocus && this.props.collapsed):
@@ -19094,6 +19127,20 @@ TreeLabel = React.createClass({
           return '#888';
         default:
           return '#fff';
+      }
+    }).call(this);
+    textAlign = (function() {
+      switch (this.props.type) {
+        case 'circle':
+          return 'center';
+        case 'rectangle':
+          return 'left';
+        case 'triangle':
+          return 'left';
+        case 'square':
+          return 'left';
+        default:
+          return 'center';
       }
     }).call(this);
     comp = (function() {
@@ -19112,8 +19159,7 @@ TreeLabel = React.createClass({
       style: {
         position: 'absolute',
         left: this.props.left,
-        backgroundColor: backgroundColor,
-        textAlign: 'center'
+        backgroundColor: backgroundColor
       },
       onClick: (function(_this) {
         return function(e) {
@@ -19127,7 +19173,7 @@ TreeLabel = React.createClass({
           ctrl = e.ctrlKey;
           meta = e.metaKey;
           switch (false) {
-            case !(e.key === 'Enter' && shift):
+            case !(e.key === 'Enter' && ctrl):
               return _this.props.cb.setHeadCallback();
             case !(e.key === ' ' && shift):
               e.preventDefault();
@@ -19143,7 +19189,7 @@ TreeLabel = React.createClass({
                 }
               }
               break;
-            case e.key !== 'Enter':
+            case !(e.key === 'Enter' && (!shift)):
               e.preventDefault();
               return _this.props.cb.addChildCallback();
             case e.key !== 'Tab':
@@ -19189,16 +19235,15 @@ TreeLabel = React.createClass({
           }
         };
       })(this)
-    }, ra.input({
+    }, ra.textarea({
       type: 'text',
       value: this.props.children,
       style: {
-        display: 'table-cell',
-        width: this.props.width - 5,
-        textAlign: 'center',
-        marginTop: this.props.height / 2 - 7,
-        border: 'none',
-        backgroundColor: backgroundColor
+        width: this.props.textWidth,
+        height: this.props.textHeight,
+        marginTop: (this.props.height - this.props.textHeight) / 2,
+        marginLeft: (this.props.width - this.props.textWidth) / 2,
+        textAlign: textAlign
       },
       onChange: (function(_this) {
         return function(e) {
@@ -19267,6 +19312,8 @@ TreeNode = React.createClass({
       left: this.getCenter().x - this.props.root.getLabelWidth() / 2,
       width: this.props.root.getLabelWidth(),
       height: this.props.root.getLabelHeight(),
+      textWidth: this.props.root.getTextWidth(),
+      textHeight: this.props.root.getTextHeight(),
       hasFocus: hasFocus,
       collapsed: this.props.root.getCollapsed(),
       cb: this.props.cb,
@@ -19308,7 +19355,7 @@ BaobabTree = React.createClass({
       head: this.props.initialRoot,
       textSetter: this.props.textSetter,
       type: 'circle',
-      maxAncestor: 6
+      maxAncestor: 4
     };
   },
   componentWillReceiveProps: function(nextProps) {
@@ -19358,8 +19405,39 @@ BaobabTree = React.createClass({
       head: focus.getNearerAncestor(head, this.state.maxAncestor)
     });
   },
+  _deleteHelper: function() {
+    var focus, head, oldIndex, parent;
+    if (this.state.focus !== this.state.root) {
+      focus = this.state.focus;
+      parent = this.state.focus.parent;
+      head = this.state.head;
+      parent.mutator().deleteSubTree(focus);
+      if (focus === head) {
+        this.setState({
+          head: parent
+        });
+        head = parent;
+      }
+      oldIndex = parent.subtrees.indexOf(focus);
+      if (oldIndex > 0) {
+        this.setState({
+          focus: parent.subtrees[oldIndex - 1]
+        });
+        focus = parent.subtrees[oldIndex - 1];
+      } else {
+        this.setState({
+          focus: parent
+        });
+        focus = parent;
+      }
+      this.setHeadAndCollapseYouth(focus, head);
+      return true;
+    }
+    return false;
+  },
   render: function() {
     return ra.div({
+      id: 'BAOBAB',
       style: {
         position: 'relative'
       }
@@ -19531,39 +19609,15 @@ BaobabTree = React.createClass({
         })(this),
         deleteCallback: (function(_this) {
           return function() {
-            var focus, oldIndex, parent;
-            if (_this.state.focus !== _this.state.root && !_this.state.focus.subtrees.length) {
-              focus = _this.state.focus;
-              parent = _this.state.focus.parent;
-              oldIndex = parent.subtrees.indexOf(focus);
-              if (oldIndex > 0) {
-                _this.setState({
-                  focus: parent.subtrees[oldIndex - 1]
-                });
-              } else {
-                _this.setState({
-                  focus: parent
-                });
-              }
-              parent.mutator().deleteSubTree(focus);
-              return true;
+            if (!_this.state.focus.subtrees.length) {
+              return _this._deleteHelper();
             }
             return false;
           };
         })(this),
         forceDeleteCallback: (function(_this) {
           return function() {
-            var focus, subtree, _i, _len, _ref;
-            focus = _this.state.focus;
-            _ref = _this.state.focus.subtrees;
-            for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-              subtree = _ref[_i];
-              focus.mutator().deleteSubTree(subtree);
-            }
-            _this.setState({
-              focus: focus
-            });
-            return true;
+            return _this._deleteHelper();
           };
         })(this)
       },

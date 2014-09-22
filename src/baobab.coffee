@@ -95,13 +95,25 @@ class TreeState
 		@width = null
 		if @parent?
 			@parent.soil()
-	getLabelWidth: -> Math.max(@value.length * 4 + 1, 16) * 2
+	getTextWidth: ->
+		lineLengths = [line.length for line in @value.split('\n')][0]
+		maxLineLength = Math.max.apply(null, lineLengths)
+		return Math.max(maxLineLength * 7, 1)
+	getTextHeight: ->
+		numLines = @value.split('\n').length
+		return numLines * 14
+	getLabelWidth: ->
+		return switch @type
+			when 'rectangle' then @getTextWidth() + 10
+			when 'circle' then Math.max(@getTextWidth(), @getTextHeight()) * Math.sqrt(2)
+			when 'square' then Math.max(@getTextWidth() + 5, @getTextHeight() + 5)
+			when 'triangle' then Math.max(@getTextWidth() + 5, @getTextHeight() + 5)
 	getLabelHeight: ->
 		return switch @type
-			when 'rectangle' then 25
-			when 'circle' then @getLabelWidth()
-			when 'triangle' then @getLabelWidth()
-			when 'square' then @getLabelWidth()
+			when 'rectangle' then @getTextHeight() + 10
+			when 'circle' then Math.max(@getTextWidth(), @getTextHeight()) * Math.sqrt(2)
+			when 'square' then Math.max(@getTextWidth() + 5, @getTextHeight() + 5)
+			when 'triangle' then Math.max(@getTextWidth() + 5, @getTextHeight() + 5)
 	toJSON: ->
 		toSimpleObject = (tree) ->
 			value: tree.value
@@ -157,7 +169,7 @@ Circle = React.createClass
 			left: @props.left
 			borderRadius: @props.width / 2
 			width: @props.width
-			height: @props.width
+			height: @props.height
 		}
 	,
 		@props.children
@@ -199,7 +211,7 @@ Square = React.createClass
 			position: 'absolute'
 			left: @props.left
 			width: @props.width
-			height: @props.width
+			height: @props.height
 	,
 		@props.children
 
@@ -216,6 +228,12 @@ TreeLabel = React.createClass
 			when @props.hasFocus then '#afa'
 			when @props.collapsed then '#888'
 			else '#fff'
+		textAlign = switch @props.type
+			when 'circle' then 'center'
+			when 'rectangle' then 'left'
+			when 'triangle' then 'left'
+			when 'square' then 'left'
+			else 'center'
 		comp = switch @props.type
 			when 'circle' then Circle
 			when 'rectangle' then Rectangle
@@ -226,7 +244,6 @@ TreeLabel = React.createClass
 				position: 'absolute'
 				left: @props.left
 				backgroundColor: backgroundColor
-				textAlign: 'center'
 			onClick: (e) =>
 				e.currentTarget.children[0].focus()
 			onKeyDown: (e) =>
@@ -234,7 +251,7 @@ TreeLabel = React.createClass
 				ctrl = e.ctrlKey
 				meta = e.metaKey
 				switch
-					when e.key == 'Enter' and shift
+					when e.key == 'Enter' and ctrl
 						@props.cb.setHeadCallback()
 					when e.key == ' ' and shift
 						e.preventDefault()
@@ -247,7 +264,7 @@ TreeLabel = React.createClass
 							if not @props.children
 								e.preventDefault()
 								@props.cb.deleteCallback()
-					when e.key == 'Enter'
+					when e.key == 'Enter' and (not shift)
 						e.preventDefault()
 						@props.cb.addChildCallback()
 					when e.key == 'Tab'
@@ -282,16 +299,16 @@ TreeLabel = React.createClass
 						else
 							e.preventDefault()
 							@props.cb.ascendCallback()
-		, ra.input
+		,
+			ra.textarea
 				type: 'text'
 				value: @props.children
 				style:
-					display: 'table-cell'
-					width: @props.width - 5
-					textAlign: 'center'
-					marginTop: @props.height / 2 - 7
-					border: 'none'
-					backgroundColor: backgroundColor
+					width: @props.textWidth
+					height: @props.textHeight
+					marginTop: (@props.height - @props.textHeight) / 2
+					marginLeft: (@props.width - @props.textWidth) / 2
+					textAlign: textAlign
 				onChange: (e) =>
 					newValue = e.currentTarget.value
 					@props.cb.changeCallback newValue
@@ -347,6 +364,8 @@ TreeNode = React.createClass
 				left: @getCenter().x - @props.root.getLabelWidth() / 2
 				width: @props.root.getLabelWidth()
 				height: @props.root.getLabelHeight()
+				textWidth: @props.root.getTextWidth()
+				textHeight: @props.root.getTextHeight()
 				hasFocus: hasFocus
 				collapsed: @props.root.getCollapsed()
 				cb: @props.cb
@@ -376,7 +395,7 @@ BaobabTree = React.createClass
 		head: @props.initialRoot
 		textSetter: @props.textSetter
 		type: 'circle'
-		maxAncestor: 6
+		maxAncestor: 4
 
 	componentWillReceiveProps: (nextProps) ->
 		if nextProps.initialRoot?
@@ -401,8 +420,31 @@ BaobabTree = React.createClass
 		head.mutator().collapseYouth @state.maxAncestor
 		@setState
 			head: focus.getNearerAncestor(head, @state.maxAncestor)
+	_deleteHelper: ->
+		if @state.focus != @state.root
+			focus = @state.focus
+			parent = @state.focus.parent
+			head = @state.head
+			parent.mutator().deleteSubTree(focus)
+
+			if focus == head
+				@setState({head: parent})
+				head = parent
+
+			oldIndex = parent.subtrees.indexOf(focus)
+			if oldIndex > 0
+				@setState({focus: parent.subtrees[oldIndex - 1]})
+				focus = parent.subtrees[oldIndex - 1]
+			else
+				@setState({focus: parent})
+				focus = parent
+			
+			@setHeadAndCollapseYouth focus, head
+			return true
+		return false
 
 	render: -> ra.div
+		id: 'BAOBAB'
 		style:
 			position: 'relative'
 		,
@@ -492,25 +534,11 @@ BaobabTree = React.createClass
 								return true
 						return false
 					deleteCallback: =>
-						if @state.focus != @state.root and not @state.focus.subtrees.length
-							focus = @state.focus
-							parent = @state.focus.parent
-
-							oldIndex = parent.subtrees.indexOf(focus)
-							if oldIndex > 0
-								@setState({focus: parent.subtrees[oldIndex - 1]})
-							else
-								@setState({focus: parent})
-
-							parent.mutator().deleteSubTree(focus)
-							return true
+						if not @state.focus.subtrees.length
+							return @_deleteHelper()
 						return false
 					forceDeleteCallback: =>
-						focus = @state.focus
-						for subtree in @state.focus.subtrees
-							focus.mutator().deleteSubTree(subtree)
-						@setState({focus: focus})
-						return true
+						return @_deleteHelper()
 				onBlur: (e) =>
 					if e.relatedTarget is null
 						@setState({focus: null})

@@ -1,33 +1,38 @@
-.label {
+#BAOBAB .label {
 	border: 1px solid #333333;
 	cursor: pointer;
 }
 
-li {
+#BAOBAB li {
 	list-style: none;
 }
 
-ul {
+#BAOBAB ul {
 	padding-left: 0px;
 }
 
 
-input {
+#BAOBAB input {
 	outline: none;
 	cursor: pointer;
 	font-family: monospace;
 }
-input:focus {
+#BAOBAB input:focus {
 	cursor: text;
 }
 
-textarea {
+#BAOBAB textarea {
+	background: transparent;
 	resize: none;
 	border: none;
 	outline: none;
 	cursor: pointer;
+	overflow: hidden;
 	font-family: monospace;
+	padding: 0;
+	top: 0;
+	left: 0;
 }
-textarea:focus {
+#BAOBAB textarea:focus {
 	cursor: text;
 }
