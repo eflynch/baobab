@@ -16,6 +16,6 @@ Webtool for generating tree diagrams effortlessly
 
 #### Control
 - Shift+Space - collapse/expand subtree
-- Shift+Enter - set head
-- Delete - delete empty leaf
+- Ctrl+Enter - set head
+- Delete - delete empty node
 - Shift+Delete - delete subtree
