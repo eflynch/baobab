@@ -18837,6 +18837,13 @@ TreeState = (function() {
           return newTree;
         };
       })(this),
+      addSubTreeExisting: (function(_this) {
+        return function(tree) {
+          _this.subtrees.push(tree);
+          tree.parent = _this;
+          return _this.soil();
+        };
+      })(this),
       deleteSubTree: (function(_this) {
         return function(subtree) {
           var indexToDelete;
@@ -18863,6 +18870,26 @@ TreeState = (function() {
             subtree.mutator().collapseYouth(nearNess - 1);
           }
           return true;
+        };
+      })(this),
+      removeSelfFromChain: (function(_this) {
+        return function() {
+          var child;
+          if (_this.subtrees.length !== 1) {
+            return false;
+          }
+          if (_this.parent == null) {
+            return false;
+          }
+          child = _this.subtrees[0];
+          _this.parent.mutator().deleteSubTree(_this);
+          _this.parent.mutator().addSubTreeExisting(child);
+          return true;
+        };
+      })(this),
+      orphan: (function(_this) {
+        return function() {
+          return _this.parent = null;
         };
       })(this)
     };
@@ -19407,33 +19434,30 @@ BaobabTree = React.createClass({
   },
   _deleteHelper: function() {
     var focus, head, oldIndex, parent;
-    if (this.state.focus !== this.state.root) {
-      focus = this.state.focus;
-      parent = this.state.focus.parent;
-      head = this.state.head;
-      parent.mutator().deleteSubTree(focus);
-      if (focus === head) {
-        this.setState({
-          head: parent
-        });
-        head = parent;
-      }
-      oldIndex = parent.subtrees.indexOf(focus);
-      if (oldIndex > 0) {
-        this.setState({
-          focus: parent.subtrees[oldIndex - 1]
-        });
-        focus = parent.subtrees[oldIndex - 1];
-      } else {
-        this.setState({
-          focus: parent
-        });
-        focus = parent;
-      }
-      this.setHeadAndCollapseYouth(focus, head);
-      return true;
+    focus = this.state.focus;
+    parent = this.state.focus.parent;
+    head = this.state.head;
+    parent.mutator().deleteSubTree(focus);
+    if (focus === head) {
+      this.setState({
+        head: parent
+      });
+      head = parent;
     }
-    return false;
+    oldIndex = parent.subtrees.indexOf(focus);
+    if (oldIndex > 0) {
+      this.setState({
+        focus: parent.subtrees[oldIndex - 1]
+      });
+      focus = parent.subtrees[oldIndex - 1];
+    } else {
+      this.setState({
+        focus: parent
+      });
+      focus = parent;
+    }
+    this.setHeadAndCollapseYouth(focus, head);
+    return true;
   },
   render: function() {
     return ra.div({
@@ -19609,15 +19633,47 @@ BaobabTree = React.createClass({
         })(this),
         deleteCallback: (function(_this) {
           return function() {
-            if (!_this.state.focus.subtrees.length) {
+            var child, focus, head, newFocus, newHead, newRoot, parent;
+            if (_this.state.focus.subtrees.length > 1) {
+              return false;
+            }
+            if (_this.state.focus.subtrees.length === 1) {
+              focus = _this.state.focus;
+              parent = _this.state.focus.parent;
+              child = _this.state.focus.subtrees[0];
+              head = _this.state.head;
+              newFocus = child;
+              if (focus === _this.state.root) {
+                newRoot = child;
+                newHead = child;
+                child.mutator().orphan();
+              } else {
+                focus.mutator().removeSelfFromChain();
+                newRoot = _this.state.root;
+                if (head === focus) {
+                  newHead = child;
+                } else {
+                  newHead = head;
+                }
+              }
+              _this.setState({
+                head: newHead,
+                focus: newFocus,
+                root: newRoot
+              });
+              _this.setHeadAndCollapseYouth(newFocus, newHead);
+              return true;
+            }
+            if (_this.state.focus !== _this.state.root) {
               return _this._deleteHelper();
             }
-            return false;
           };
         })(this),
         forceDeleteCallback: (function(_this) {
           return function() {
-            return _this._deleteHelper();
+            if (_this.state.focus !== _this.state.root) {
+              return _this._deleteHelper();
+            }
           };
         })(this)
       },

@@ -50,6 +50,10 @@ class TreeState
 			@subtrees.splice insertIndex, 0, newTree
 			@soil()
 			return newTree
+		addSubTreeExisting: (tree) =>
+			@subtrees.push(tree)
+			tree.parent = this
+			@soil()
 		deleteSubTree: (subtree) =>
 			indexToDelete = @subtrees.indexOf(subtree)
 			if indexToDelete?
@@ -64,6 +68,19 @@ class TreeState
 			for subtree in @subtrees
 				subtree.mutator().collapseYouth (nearNess - 1)
 			return true
+		removeSelfFromChain: =>
+			if @subtrees.length != 1
+				return false
+			if not @parent?
+				return false
+
+			child = @subtrees[0]
+			@parent.mutator().deleteSubTree(this)
+			@parent.mutator().addSubTreeExisting(child)
+			return true
+		orphan: =>
+			@parent = null
+
 	getCollapsed: ->
 		if not @subtrees.length
 			@collapsed = false
@@ -421,27 +438,25 @@ BaobabTree = React.createClass
 		@setState
 			head: focus.getNearerAncestor(head, @state.maxAncestor)
 	_deleteHelper: ->
-		if @state.focus != @state.root
-			focus = @state.focus
-			parent = @state.focus.parent
-			head = @state.head
-			parent.mutator().deleteSubTree(focus)
+		focus = @state.focus
+		parent = @state.focus.parent
+		head = @state.head
+		parent.mutator().deleteSubTree(focus)
 
-			if focus == head
-				@setState({head: parent})
-				head = parent
+		if focus == head
+			@setState({head: parent})
+			head = parent
 
-			oldIndex = parent.subtrees.indexOf(focus)
-			if oldIndex > 0
-				@setState({focus: parent.subtrees[oldIndex - 1]})
-				focus = parent.subtrees[oldIndex - 1]
-			else
-				@setState({focus: parent})
-				focus = parent
-			
-			@setHeadAndCollapseYouth focus, head
-			return true
-		return false
+		oldIndex = parent.subtrees.indexOf(focus)
+		if oldIndex > 0
+			@setState({focus: parent.subtrees[oldIndex - 1]})
+			focus = parent.subtrees[oldIndex - 1]
+		else
+			@setState({focus: parent})
+			focus = parent
+		
+		@setHeadAndCollapseYouth focus, head
+		return true
 
 	render: -> ra.div
 		id: 'BAOBAB'
@@ -534,11 +549,41 @@ BaobabTree = React.createClass
 								return true
 						return false
 					deleteCallback: =>
-						if not @state.focus.subtrees.length
+						if @state.focus.subtrees.length > 1
+							return false
+
+						if @state.focus.subtrees.length == 1
+							focus = @state.focus
+							parent = @state.focus.parent
+							child = @state.focus.subtrees[0]
+							head = @state.head
+
+							newFocus = child
+
+							if focus == @state.root
+								newRoot = child
+								newHead = child
+								child.mutator().orphan()
+							else
+								focus.mutator().removeSelfFromChain()
+								newRoot = @state.root
+							
+								if head == focus
+									newHead = child
+								else
+									newHead = head
+
+							@setState
+								head: newHead
+								focus: newFocus
+								root: newRoot
+							@setHeadAndCollapseYouth newFocus, newHead
+							return true
+						if @state.focus != @state.root
 							return @_deleteHelper()
-						return false
 					forceDeleteCallback: =>
-						return @_deleteHelper()
+						if @state.focus != @state.root
+							return @_deleteHelper()
 				onBlur: (e) =>
 					if e.relatedTarget is null
 						@setState({focus: null})
