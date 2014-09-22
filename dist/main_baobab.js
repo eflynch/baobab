@@ -19201,6 +19201,7 @@ TreeLabel = React.createClass({
           meta = e.metaKey;
           switch (false) {
             case !(e.key === 'Enter' && ctrl):
+              e.preventDefault();
               return _this.props.cb.setHeadCallback();
             case !(e.key === ' ' && shift):
               e.preventDefault();
@@ -19433,11 +19434,10 @@ BaobabTree = React.createClass({
     });
   },
   _deleteHelper: function() {
-    var focus, head, oldIndex, parent;
+    var focus, head, newFocus, oldIndex, parent;
     focus = this.state.focus;
     parent = this.state.focus.parent;
     head = this.state.head;
-    parent.mutator().deleteSubTree(focus);
     if (focus === head) {
       this.setState({
         head: parent
@@ -19446,17 +19446,15 @@ BaobabTree = React.createClass({
     }
     oldIndex = parent.subtrees.indexOf(focus);
     if (oldIndex > 0) {
-      this.setState({
-        focus: parent.subtrees[oldIndex - 1]
-      });
-      focus = parent.subtrees[oldIndex - 1];
+      newFocus = parent.subtrees[oldIndex - 1];
     } else {
-      this.setState({
-        focus: parent
-      });
-      focus = parent;
+      newFocus = parent;
     }
-    this.setHeadAndCollapseYouth(focus, head);
+    parent.mutator().deleteSubTree(focus);
+    this.setState({
+      focus: newFocus
+    });
+    this.setHeadAndCollapseYouth(newFocus, head);
     return true;
   },
   render: function() {
@@ -19486,9 +19484,10 @@ BaobabTree = React.createClass({
             } else {
               _this.state.focus.mutator().setCollapsed(true);
             }
-            return _this.setState({
+            _this.setState({
               focus: _this.state.focus
             });
+            return _this.setHeadAndCollapseYouth();
           };
         })(this),
         addChildCallback: (function(_this) {

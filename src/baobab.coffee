@@ -269,6 +269,7 @@ TreeLabel = React.createClass
 				meta = e.metaKey
 				switch
 					when e.key == 'Enter' and ctrl
+						e.preventDefault()
 						@props.cb.setHeadCallback()
 					when e.key == ' ' and shift
 						e.preventDefault()
@@ -441,7 +442,6 @@ BaobabTree = React.createClass
 		focus = @state.focus
 		parent = @state.focus.parent
 		head = @state.head
-		parent.mutator().deleteSubTree(focus)
 
 		if focus == head
 			@setState({head: parent})
@@ -449,13 +449,13 @@ BaobabTree = React.createClass
 
 		oldIndex = parent.subtrees.indexOf(focus)
 		if oldIndex > 0
-			@setState({focus: parent.subtrees[oldIndex - 1]})
-			focus = parent.subtrees[oldIndex - 1]
+			newFocus = parent.subtrees[oldIndex - 1]
 		else
-			@setState({focus: parent})
-			focus = parent
+			newFocus = parent
 		
-		@setHeadAndCollapseYouth focus, head
+		parent.mutator().deleteSubTree(focus)
+		@setState({focus: newFocus})
+		@setHeadAndCollapseYouth newFocus, head
 		return true
 
 	render: -> ra.div
@@ -477,6 +477,7 @@ BaobabTree = React.createClass
 						else
 							@state.focus.mutator().setCollapsed true
 						@setState({focus: @state.focus})
+						@setHeadAndCollapseYouth()
 					addChildCallback: =>
 						newTree = @state.focus.mutator().addSubTree('', null, null, @state.type)
 						@setState({focus: newTree})
