@@ -1,6 +1,17 @@
 #BAOBAB {
 	color: black;
 	font-family: monospace;
+	font-size: 11px;
+	line-height: 14px;
+	box-sizing: initial;
+	-webkit-box-sizing: initial;
+	-moz-box-sizing: initial;
+}
+
+#BAOBAB * {
+	box-sizing: initial;
+	-webkit-box-sizing: initial;
+	-moz-box-sizing: initial;
 }
 
 #BAOBAB .BAOBAB_LABEL {
@@ -19,11 +30,11 @@
 
 
 #BAOBAB input, button, select, textarea {
+	font-family: inherit;
+	font-size: inherit;
+	line-height: inherit;
 	outline: none;
 	cursor: pointer;
-	font-family: monospace;
-	font-size: 10px;
-	color: black;
 }
 #BAOBAB input, textarea:focus {
 	cursor: text;

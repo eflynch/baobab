@@ -19025,6 +19025,7 @@ TreeState = (function() {
 })();
 
 Line = React.createClass({
+  displayName: 'Line',
   getAngle: function() {
     var deltaX, deltaY, theta;
     deltaX = this.props.endX - this.props.startX;
@@ -19048,7 +19049,7 @@ Line = React.createClass({
     top = this.props.startY;
     length = Math.sqrt(Math.pow(Math.abs(this.props.startX - this.props.endX), 2) + Math.pow(Math.abs(this.props.startY - this.props.endY), 2));
     return this.transferPropsTo(ra.div({
-      className: 'line',
+      className: 'BAOBAB_line',
       style: {
         width: length,
         height: this.props.width,
@@ -19074,7 +19075,7 @@ Circle = React.createClass({
   displayName: 'Circle',
   render: function() {
     return this.transferPropsTo(ra.div({
-      className: 'label',
+      className: 'BAOBAB_label',
       style: {
         position: 'absolute',
         left: this.props.left,
@@ -19090,7 +19091,7 @@ Rectangle = React.createClass({
   displayName: 'Rectangle',
   render: function() {
     return this.transferPropsTo(ra.div({
-      className: 'label',
+      className: 'BAOBAB_label',
       style: {
         position: 'absolute',
         left: this.props.left,
@@ -19106,7 +19107,7 @@ Triangle = React.createClass({
   displayName: 'Triangle',
   render: function() {
     return this.transferPropsTo(ra.div({
-      className: 'label',
+      className: 'BAOBAB_label',
       style: {
         position: 'absolute',
         left: this.props.left,
@@ -19121,7 +19122,7 @@ Square = React.createClass({
   displayName: 'Square',
   render: function() {
     return this.transferPropsTo(ra.div({
-      className: 'label',
+      className: 'BAOBAB_label',
       style: {
         position: 'absolute',
         left: this.props.left,
@@ -19133,7 +19134,7 @@ Square = React.createClass({
 });
 
 TreeLabel = React.createClass({
-  displayName: 'TreeLabel',
+  displayName: 'TreeBAOBAB_Label',
   componentDidMount: function() {
     return this.componentDidUpdate();
   },
@@ -19376,6 +19377,7 @@ TreeNode = React.createClass({
 });
 
 BaobabTree = React.createClass({
+  displayName: 'BaobabTree',
   getInitialState: function() {
     return {
       root: this.props.initialRoot,
