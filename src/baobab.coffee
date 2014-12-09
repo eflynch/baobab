@@ -144,6 +144,7 @@ class TreeState
 			
 
 Line = React.createClass
+	displayName: 'Line'
 	getAngle: ->
 		deltaX = @props.endX - @props.startX
 		deltaY = @props.endY - @props.startY
@@ -158,7 +159,7 @@ Line = React.createClass
 		top = @props.startY
 		length = Math.sqrt Math.pow(Math.abs(@props.startX - @props.endX), 2) + Math.pow(Math.abs(@props.startY - @props.endY), 2)
 		return @transferPropsTo ra.div
-			className: 'line',
+			className: 'BAOBAB_line',
 			style: {
 				width: length
 				height: @props.width
@@ -180,7 +181,7 @@ Line = React.createClass
 Circle = React.createClass
 	displayName: 'Circle'
 	render: -> @transferPropsTo ra.div
-		className: 'label'
+		className: 'BAOBAB_label'
 		style: {
 			position: 'absolute'
 			left: @props.left
@@ -195,7 +196,7 @@ Rectangle = React.createClass
 	displayName: 'Rectangle'
 
 	render: -> @transferPropsTo ra.div
-		className: 'label'
+		className: 'BAOBAB_label'
 		style: {
 			position: 'absolute'
 			left: @props.left
@@ -210,7 +211,7 @@ Triangle = React.createClass
 	displayName: 'Triangle'
 
 	render: -> @transferPropsTo ra.div
-		className: 'label'
+		className: 'BAOBAB_label'
 		style:
 			position: 'absolute'
 			left: @props.left
@@ -223,7 +224,7 @@ Square = React.createClass
 	displayName: 'Square'
 
 	render: -> @transferPropsTo ra.div
-		className: 'label'
+		className: 'BAOBAB_label'
 		style:
 			position: 'absolute'
 			left: @props.left
@@ -233,7 +234,7 @@ Square = React.createClass
 		@props.children
 
 TreeLabel = React.createClass
-	displayName: 'TreeLabel'
+	displayName: 'TreeBAOBAB_Label'
 	componentDidMount: ->
 		@componentDidUpdate()
 	componentDidUpdate: ->
@@ -407,6 +408,7 @@ TreeNode = React.createClass
 							
 
 BaobabTree = React.createClass
+	displayName: 'BaobabTree'
 	getInitialState: ->
 		root: @props.initialRoot
 		focus: @props.initialRoot

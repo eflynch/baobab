@@ -1,10 +1,16 @@
-#BAOBAB .label {
+#BAOBAB {
+	color: black;
+	font-family: monospace;
+}
+
+#BAOBAB .BAOBAB_LABEL {
 	border: 1px solid #333333;
 	cursor: pointer;
 }
 
 #BAOBAB li {
 	list-style: none;
+	color: black;
 }
 
 #BAOBAB ul {
@@ -12,12 +18,14 @@
 }
 
 
-#BAOBAB input {
+#BAOBAB input, button, select, textarea {
 	outline: none;
 	cursor: pointer;
 	font-family: monospace;
+	font-size: 10px;
+	color: black;
 }
-#BAOBAB input:focus {
+#BAOBAB input, textarea:focus {
 	cursor: text;
 }
 
@@ -25,14 +33,8 @@
 	background: transparent;
 	resize: none;
 	border: none;
-	outline: none;
-	cursor: pointer;
 	overflow: hidden;
-	font-family: monospace;
 	padding: 0;
 	top: 0;
 	left: 0;
-}
-#BAOBAB textarea:focus {
-	cursor: text;
 }
