@@ -6,40 +6,42 @@ TreeNode = require './treenode'
 
 Tree = React.createClass
     displayName: 'BaobabTree'
+    onMutate: ->
+        if @props.onChange?
+            @props.onChange @state.root.toJSON()
+        @forceUpdate()
     getInitialState: ->
-        initialRoot = new TreeState {value: '', type: 'circle'}
+        initialRoot = new TreeState {value: '', type: 'circle', onMutate: @onMutate}
         return {
             root: initialRoot
             focus: initialRoot
             head: initialRoot
             clipboard: null
+            changed: true
         }
     getDefaultProps: ->
         maxAncestor: 6
         type: 'circle'
     componentWillMount: ->
         if @props.setRoot?
+            @props.setRoot.setOnMutate @onMutate
             @setState
                 root: @props.setRoot
                 focus: @props.setRoot
                 head: @props.setRoot
     componentWillReceiveProps: (nextProps) ->
         if nextProps.setRoot? and nextProps.setRoot != @state.root
+            @props.setRoot.setOnMutate @onMutate
             @setState
                 root: nextProps.setRoot
                 focus: nextProps.setRoot
                 head: nextProps.setRoot
         if nextProps.focusType? and nextProps.focusType != @state.focus.type
             @callbacks().setTypeCallback nextProps.focusType
-
-    componentDidUpdate: ->
-        if @props.onChange?
-            @props.onChange @state.root.toJSON()
-
     setHeadAndCollapseYouth: (focus = null, head = null) ->
         focus ?= @state.focus
         head ?= @state.head
-        head.mutator().collapseYouth @props.maxAncestor
+        head.mutator('collapseYouth') @props.maxAncestor
         @setState
             head: focus.getNearerAncestor(head, @props.maxAncestor)
     _deleteHelper: ->
@@ -57,30 +59,27 @@ Tree = React.createClass
         else
             newFocus = parent
         
-        parent.mutator().deleteSubTree(focus)
+        parent.mutator('deleteSubTree')(focus)
         @setState({focus: newFocus})
         @setHeadAndCollapseYouth newFocus, head
     callbacks: ->
         changeCallback: (newValue) =>
             if @state.focus?
-                @state.focus.mutator().setValue newValue
-                @setState({focus: @state.focus})
+                @state.focus.mutator('setValue') newValue
             return
         setTypeCallback: (newType) =>
             if @state.focus?
-                @state.focus.mutator().setType newType
-                @setState({focus: @state.focus})
+                @state.focus.mutator('setType') newType
             return
         toggleElectivelyCollapsedCallback: =>
             if @state.focus.getCollapsed()
-                @state.focus.mutator().setCollapsed false
+                @state.focus.mutator('setCollapsed') false
             else
-                @state.focus.mutator().setCollapsed true
-            @setState({focus: @state.focus})
+                @state.focus.mutator('setCollapsed') true
             @setHeadAndCollapseYouth()
             return
         addChildCallback: =>
-            newTree = @state.focus.mutator().addSubTree('', null, null, @props.type)
+            newTree = @state.focus.mutator('addSubTree')('', null, null, @props.type)
             @setState({focus: newTree})
             @setHeadAndCollapseYouth()
             return
@@ -89,6 +88,7 @@ Tree = React.createClass
                 newTree = new TreeState
                     value: ''
                     type: @props.type
+                    onMutate: @onMutate
                 newTree.subtrees.push(@state.root)
                 @state.root.parent = newTree
                 @setHeadAndCollapseYouth newTree, newTree
@@ -102,18 +102,17 @@ Tree = React.createClass
             return
         pasteCallback: =>
             if @state.clipboard?
-                @state.focus.mutator().addSubTreeExisting(@state.clipboard.copy())
-                @setState({focus: @state.focus})
+                @state.focus.mutator('addSubTreeExisting')(@state.clipboard.copy())
                 @setHeadAndCollapseYouth()
             return
         addLeftSiblingCallback: =>
             if @state.focus != @state.head
-                newTree = @state.focus.parent.mutator().addSubTree '', @state.focus, 'right', @props.type
+                newTree = @state.focus.parent.mutator('addSubTree') '', @state.focus, 'right', @props.type
                 @setState({focus: newTree})
             return
         addRightSiblingCallback: =>
             if @state.focus != @state.head
-                newTree = @state.focus.parent.mutator().addSubTree '', @state.focus, 'left', @props.type
+                newTree = @state.focus.parent.mutator('addSubTree') '', @state.focus, 'left', @props.type
                 @setState({focus: newTree})
             return
         focusCallback: (newFocus) =>
@@ -122,7 +121,7 @@ Tree = React.createClass
             return
         setHeadCallback: =>
             if @state.focus.getCollapsed()
-                @state.focus.mutator().setCollapsed false
+                @state.focus.mutator('setCollapsed') false
             @setState({head: @state.focus})
             return
         ascendCallback: =>
@@ -138,7 +137,7 @@ Tree = React.createClass
         descendCallback: =>
             if @state.focus.subtrees.length
                 if @state.focus.getCollapsed()
-                    @state.focus.mutator().setCollapsed false
+                    @state.focus.mutator('setCollapsed') false
                 @setState({focus: @state.focus.subtrees[0]})
                 @setHeadAndCollapseYouth()
             return
@@ -172,9 +171,9 @@ Tree = React.createClass
                 if focus == @state.root
                     newRoot = child
                     newHead = child
-                    child.mutator().orphan()
+                    child.mutator('orphan')()
                 else
-                    focus.mutator().removeSelfFromChain()
+                    focus.mutator('removeSelfFromChain')()
                     newRoot = @state.root
                 
                     if head == focus
@@ -194,7 +193,7 @@ Tree = React.createClass
             if @state.focus != @state.root
                 return @_deleteHelper()
 
-            @state.focus.mutator().removeChildren()
+            @state.focus.mutator('removeChildren')()
             @setState
                 head: @state.root
                 focus: @state.root

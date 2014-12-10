@@ -4,89 +4,100 @@ makeid = (size=5) ->
     return text.join()
 
 class TreeState
-    @fromJSON: (string, newIDs=false) ->
+    @fromJSON: (string, newIDs=false, onMutate=null) ->
         simpleObject = JSON.parse(string)
         treeStateFromSimpleObject = (simpleObject, parent = null) ->
             newTree = new TreeState
                 value: simpleObject.value
                 parent: parent
                 type: simpleObject.type
+                onMutate: onMutate
             newTree.id = simpleObject.id
             if newIDs
                 newTree.id = makeid()
-            newTree.mutator().setCollapsed simpleObject.collapsed
+            newTree.mutator('setCollapsed') simpleObject.collapsed
             for subObject in simpleObject.subtrees
                 newTree.subtrees.push treeStateFromSimpleObject(subObject, newTree)
             return newTree
         return treeStateFromSimpleObject simpleObject
-    constructor: ({@value, @parent, @type}) ->
+    constructor: ({@value, @parent, @type, @onMutate}) ->
         @subtrees = []
         @id = "#{makeid()}"
         @collapsed = false
         @width = null
-    mutator: =>
-        setCollapsed: (newValue) =>
-            @collapsed = newValue
-            if newValue == false
+    setOnMutate: (onMutate) =>
+        @onMutate = onMutate
+        for subtree in @subtrees
+            subtree.setOnMutate onMutate
+        return
+    mutator: (mutation) =>
+        mutationFunction = switch mutation
+            when 'setCollapsed' then (newValue) =>
+                @collapsed = newValue
+                if newValue == false
+                    for subtree in @subtrees
+                        subtree.mutator('setCollapsed') false
+                @soil()
+                return
+            when 'setType' then (newType) =>
+                @type = newType        
+                @soil()
+                return
+            when 'setValue' then (newValue) =>
+                @value = newValue
+                @soil()
+                return
+            when 'addSubTree' then (value, sibling = null, relation = null, type = null) =>
+                if sibling?
+                    if relation == 'right'
+                        insertIndex = @subtrees.indexOf(sibling)
+                    if relation == 'left'
+                        insertIndex = @subtrees.indexOf(sibling) + 1
+                else
+                    insertIndex = @subtrees.length
+                if not type?
+                    type = @type
+                newTree = new TreeState({value: value, parent: this, type: type, onMutate: @onMutate})
+                @subtrees.splice insertIndex, 0, newTree
+                @soil()
+                return newTree
+            when 'addSubTreeExisting' then (tree) =>
+                @subtrees.push(tree)
+                tree.parent = this
+                @soil()
+            when 'removeChildren' then =>
+                @subtrees = []
+                @soil()
+            when 'deleteSubTree' then (subtree) =>
+                indexToDelete = @subtrees.indexOf(subtree)
+                if indexToDelete?
+                    @subtrees.splice(indexToDelete, 1)
+                @soil()
+            when 'collapseYouth' then (nearNess) =>
+                if not @subtrees.length
+                    return true
+                if nearNess < 0
+                    @mutator('setCollapsed') true
+                    return true
                 for subtree in @subtrees
-                    subtree.mutator().setCollapsed false
-            @soil()
-            return
-        setType: (newType) =>
-            @type = newType        
-            @soil()
-            return
-        setValue: (newValue) =>
-            @value = newValue
-            @soil()
-            return
-        addSubTree: (value, sibling = null, relation = null, type = null) =>
-            if sibling?
-                if relation == 'right'
-                    insertIndex = @subtrees.indexOf(sibling)
-                if relation == 'left'
-                    insertIndex = @subtrees.indexOf(sibling) + 1
-            else
-                insertIndex = @subtrees.length
-            if not type?
-                type = @type
-            newTree = new TreeState({value: value, parent: this, type: type})
-            @subtrees.splice insertIndex, 0, newTree
-            @soil()
-            return newTree
-        addSubTreeExisting: (tree) =>
-            @subtrees.push(tree)
-            tree.parent = this
-            @soil()
-        removeChildren: =>
-            @subtrees = []
-            @soil()
-        deleteSubTree: (subtree) =>
-            indexToDelete = @subtrees.indexOf(subtree)
-            if indexToDelete?
-                @subtrees.splice(indexToDelete, 1)
-            @soil()
-        collapseYouth: (nearNess) =>
-            if not @subtrees.length
+                    subtree.mutator('collapseYouth') (nearNess - 1)
                 return true
-            if nearNess < 0
-                @mutator().setCollapsed true
-                return true
-            for subtree in @subtrees
-                subtree.mutator().collapseYouth (nearNess - 1)
-            return true
-        removeSelfFromChain: =>
-            if @subtrees.length != 1
-                return false
-            if not @parent?
-                return false
+            when 'removeSelfFromChain' then =>
+                if @subtrees.length != 1
+                    return false
+                if not @parent?
+                    return false
 
-            child = @subtrees[0]
-            @parent.mutator().deleteSubTree(this)
-            @parent.mutator().addSubTreeExisting(child)
-            return true
-        orphan: =>
-            @parent = null
+                child = @subtrees[0]
+                @parent.mutator('deleteSubTree')(this)
+                @parent.mutator('addSubTreeExisting')(child)
+                return true
+            when 'orphan' then =>
+                @parent = null
+        return =>
+            result = mutationFunction.apply this, arguments
+            @onMutate?()
+            return result
 
     getCollapsed: ->
         if not @subtrees.length
@@ -139,7 +150,7 @@ class TreeState
             when 'square' then Math.max(@getTextWidth() + 10, @getTextHeight() + 10)
             when 'triangle' then Math.max(@getTextWidth(), @getTextHeight()) * ( 1 + Math.sqrt(2)/2)
     copy: ->
-        return TreeState.fromJSON(@toJSON(), newIDs=true)
+        return TreeState.fromJSON(@toJSON(), newIDs=true, onMutate=@onMutate)
     toJSON: ->
         toSimpleObject = (tree) ->
             value: tree.value

@@ -12,17 +12,25 @@
 
   Tree = React.createClass({
     displayName: 'BaobabTree',
+    onMutate: function() {
+      if (this.props.onChange != null) {
+        this.props.onChange(this.state.root.toJSON());
+      }
+      return this.forceUpdate();
+    },
     getInitialState: function() {
       var initialRoot;
       initialRoot = new TreeState({
         value: '',
-        type: 'circle'
+        type: 'circle',
+        onMutate: this.onMutate
       });
       return {
         root: initialRoot,
         focus: initialRoot,
         head: initialRoot,
-        clipboard: null
+        clipboard: null,
+        changed: true
       };
     },
     getDefaultProps: function() {
@@ -33,6 +41,7 @@
     },
     componentWillMount: function() {
       if (this.props.setRoot != null) {
+        this.props.setRoot.setOnMutate(this.onMutate);
         return this.setState({
           root: this.props.setRoot,
           focus: this.props.setRoot,
@@ -42,6 +51,7 @@
     },
     componentWillReceiveProps: function(nextProps) {
       if ((nextProps.setRoot != null) && nextProps.setRoot !== this.state.root) {
+        this.props.setRoot.setOnMutate(this.onMutate);
         this.setState({
           root: nextProps.setRoot,
           focus: nextProps.setRoot,
@@ -50,11 +60,6 @@
       }
       if ((nextProps.focusType != null) && nextProps.focusType !== this.state.focus.type) {
         return this.callbacks().setTypeCallback(nextProps.focusType);
-      }
-    },
-    componentDidUpdate: function() {
-      if (this.props.onChange != null) {
-        return this.props.onChange(this.state.root.toJSON());
       }
     },
     setHeadAndCollapseYouth: function(focus, head) {
@@ -70,7 +75,7 @@
       if (head == null) {
         head = this.state.head;
       }
-      head.mutator().collapseYouth(this.props.maxAncestor);
+      head.mutator('collapseYouth')(this.props.maxAncestor);
       return this.setState({
         head: focus.getNearerAncestor(head, this.props.maxAncestor)
       });
@@ -92,7 +97,7 @@
       } else {
         newFocus = parent;
       }
-      parent.mutator().deleteSubTree(focus);
+      parent.mutator('deleteSubTree')(focus);
       this.setState({
         focus: newFocus
       });
@@ -103,40 +108,31 @@
         changeCallback: (function(_this) {
           return function(newValue) {
             if (_this.state.focus != null) {
-              _this.state.focus.mutator().setValue(newValue);
-              _this.setState({
-                focus: _this.state.focus
-              });
+              _this.state.focus.mutator('setValue')(newValue);
             }
           };
         })(this),
         setTypeCallback: (function(_this) {
           return function(newType) {
             if (_this.state.focus != null) {
-              _this.state.focus.mutator().setType(newType);
-              _this.setState({
-                focus: _this.state.focus
-              });
+              _this.state.focus.mutator('setType')(newType);
             }
           };
         })(this),
         toggleElectivelyCollapsedCallback: (function(_this) {
           return function() {
             if (_this.state.focus.getCollapsed()) {
-              _this.state.focus.mutator().setCollapsed(false);
+              _this.state.focus.mutator('setCollapsed')(false);
             } else {
-              _this.state.focus.mutator().setCollapsed(true);
+              _this.state.focus.mutator('setCollapsed')(true);
             }
-            _this.setState({
-              focus: _this.state.focus
-            });
             _this.setHeadAndCollapseYouth();
           };
         })(this),
         addChildCallback: (function(_this) {
           return function() {
             var newTree;
-            newTree = _this.state.focus.mutator().addSubTree('', null, null, _this.props.type);
+            newTree = _this.state.focus.mutator('addSubTree')('', null, null, _this.props.type);
             _this.setState({
               focus: newTree
             });
@@ -149,7 +145,8 @@
             if (_this.state.focus.parent == null) {
               newTree = new TreeState({
                 value: '',
-                type: _this.props.type
+                type: _this.props.type,
+                onMutate: _this.onMutate
               });
               newTree.subtrees.push(_this.state.root);
               _this.state.root.parent = newTree;
@@ -174,10 +171,7 @@
         pasteCallback: (function(_this) {
           return function() {
             if (_this.state.clipboard != null) {
-              _this.state.focus.mutator().addSubTreeExisting(_this.state.clipboard.copy());
-              _this.setState({
-                focus: _this.state.focus
-              });
+              _this.state.focus.mutator('addSubTreeExisting')(_this.state.clipboard.copy());
               _this.setHeadAndCollapseYouth();
             }
           };
@@ -186,7 +180,7 @@
           return function() {
             var newTree;
             if (_this.state.focus !== _this.state.head) {
-              newTree = _this.state.focus.parent.mutator().addSubTree('', _this.state.focus, 'right', _this.props.type);
+              newTree = _this.state.focus.parent.mutator('addSubTree')('', _this.state.focus, 'right', _this.props.type);
               _this.setState({
                 focus: newTree
               });
@@ -197,7 +191,7 @@
           return function() {
             var newTree;
             if (_this.state.focus !== _this.state.head) {
-              newTree = _this.state.focus.parent.mutator().addSubTree('', _this.state.focus, 'left', _this.props.type);
+              newTree = _this.state.focus.parent.mutator('addSubTree')('', _this.state.focus, 'left', _this.props.type);
               _this.setState({
                 focus: newTree
               });
@@ -215,7 +209,7 @@
         setHeadCallback: (function(_this) {
           return function() {
             if (_this.state.focus.getCollapsed()) {
-              _this.state.focus.mutator().setCollapsed(false);
+              _this.state.focus.mutator('setCollapsed')(false);
             }
             _this.setState({
               head: _this.state.focus
@@ -244,7 +238,7 @@
           return function() {
             if (_this.state.focus.subtrees.length) {
               if (_this.state.focus.getCollapsed()) {
-                _this.state.focus.mutator().setCollapsed(false);
+                _this.state.focus.mutator('setCollapsed')(false);
               }
               _this.setState({
                 focus: _this.state.focus.subtrees[0]
@@ -297,9 +291,9 @@
               if (focus === _this.state.root) {
                 newRoot = child;
                 newHead = child;
-                child.mutator().orphan();
+                child.mutator('orphan')();
               } else {
-                focus.mutator().removeSelfFromChain();
+                focus.mutator('removeSelfFromChain')();
                 newRoot = _this.state.root;
                 if (head === focus) {
                   newHead = child;
@@ -325,7 +319,7 @@
             if (_this.state.focus !== _this.state.root) {
               return _this._deleteHelper();
             }
-            _this.state.focus.mutator().removeChildren();
+            _this.state.focus.mutator('removeChildren')();
             return _this.setState({
               head: _this.state.root,
               focus: _this.state.root,
