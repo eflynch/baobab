@@ -1,45 +1,47 @@
 React = require('react')
 ra = React.DOM
 
-TreeState = require './treestate.coffee'
-TreeNode = require './treenode.coffee'
+TreeState = require './treestate'
+TreeNode = require './treenode'
 
 Tree = React.createClass
     displayName: 'BaobabTree'
     getInitialState: ->
-        root: @props.initialRoot
-        focus: @props.initialRoot
-        head: @props.initialRoot
-        onChange: @props.onChange
+        initialRoot = new TreeState {value: '', type: 'circle'}
+        return {
+            root: initialRoot
+            focus: initialRoot
+            head: initialRoot
+            clipboard: null
+        }
+    getDefaultProps: ->
+        maxAncestor: 6
         type: 'circle'
-        maxAncestor: 4
-        clipboard: null
-
-    componentWillReceiveProps: (nextProps) ->
-        if nextProps.initialRoot?
+    componentWillMount: ->
+        if @props.setRoot?
             @setState
-                root: nextProps.initialRoot
-                focus: nextProps.initialRoot
-                head: nextProps.initialRoot
-        if nextProps.type?
-            @setState({type: nextProps.type})
-        if nextProps.maxAncestor?
-            @setState({maxAncestor: nextProps.maxAncestor})
-        if nextProps.onChange?
-            @setState({onChange: nextProps.onChange})
-        if nextProps.focusType?
+                root: @props.setRoot
+                focus: @props.setRoot
+                head: @props.setRoot
+    componentWillReceiveProps: (nextProps) ->
+        if nextProps.setRoot? and nextProps.setRoot != @state.root
+            @setState
+                root: nextProps.setRoot
+                focus: nextProps.setRoot
+                head: nextProps.setRoot
+        if nextProps.focusType? and nextProps.focusType != @state.focus.type
             @callbacks().setTypeCallback nextProps.focusType
 
     componentDidUpdate: ->
-        if @state.onChange?
-            @state.onChange @state.root.toJSON()
+        if @props.onChange?
+            @props.onChange @state.root.toJSON()
 
     setHeadAndCollapseYouth: (focus = null, head = null) ->
         focus ?= @state.focus
         head ?= @state.head
-        head.mutator().collapseYouth @state.maxAncestor
+        head.mutator().collapseYouth @props.maxAncestor
         @setState
-            head: focus.getNearerAncestor(head, @state.maxAncestor)
+            head: focus.getNearerAncestor(head, @props.maxAncestor)
     _deleteHelper: ->
         focus = @state.focus
         parent = @state.focus.parent
@@ -78,7 +80,7 @@ Tree = React.createClass
             @setHeadAndCollapseYouth()
             return
         addChildCallback: =>
-            newTree = @state.focus.mutator().addSubTree('', null, null, @state.type)
+            newTree = @state.focus.mutator().addSubTree('', null, null, @props.type)
             @setState({focus: newTree})
             @setHeadAndCollapseYouth()
             return
@@ -86,7 +88,7 @@ Tree = React.createClass
             if not @state.focus.parent?
                 newTree = new TreeState
                     value: ''
-                    type: @state.type
+                    type: @props.type
                 newTree.subtrees.push(@state.root)
                 @state.root.parent = newTree
                 @setHeadAndCollapseYouth newTree, newTree
@@ -106,12 +108,12 @@ Tree = React.createClass
             return
         addLeftSiblingCallback: =>
             if @state.focus != @state.head
-                newTree = @state.focus.parent.mutator().addSubTree '', @state.focus, 'right', @state.type
+                newTree = @state.focus.parent.mutator().addSubTree '', @state.focus, 'right', @props.type
                 @setState({focus: newTree})
             return
         addRightSiblingCallback: =>
             if @state.focus != @state.head
-                newTree = @state.focus.parent.mutator().addSubTree '', @state.focus, 'left', @state.type
+                newTree = @state.focus.parent.mutator().addSubTree '', @state.focus, 'left', @props.type
                 @setState({focus: newTree})
             return
         focusCallback: (newFocus) =>
@@ -270,7 +272,7 @@ Tree = React.createClass
                 showEtc: @state.head != @state.root
                 focus: @state.focus
                 root: @state.head
-                maxDepth: @state.maxAncestor
+                maxDepth: @props.maxAncestor
                 lineSpacing: 20
 
 module.exports = React.createFactory Tree

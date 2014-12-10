@@ -1,8 +1,8 @@
 React = require('react')
 ra = React.DOM
 
-TreeLabel = require './treelabel.coffee'
-Line = require './line.coffee'
+TreeLabel = require './treelabel'
+Line = require './line'
 
 TreeNode = React.createClass
     getDefaultProps: ->
