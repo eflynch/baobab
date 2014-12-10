@@ -6,13 +6,13 @@ var gutil        = require('gulp-util');
 var notify       = require('gulp-notify');
 var source       = require('vinyl-source-stream');
 
-var scriptsDir = './src';
+var scriptsDir = './';
 var buildDir = './';
 var entries = [
   {
-    'entry': 'main.coffee',
-    'exit': 'dist/main_baobab.js'
-  },
+    'entry': 'www/main.coffee',
+    'exit': 'www/main.js'
+  }
 ]
 
 var buildScript = function(entryPoint, exitPoint) {

@@ -1,1 +1,1 @@
-(function(){var React,Tree,TreeState,ra;React=require("react");ra=React.DOM;TreeState=require("./treestate.coffee");Tree=require("./tree.coffee");module.exports={TreeState:TreeState,Tree:Tree}}).call(this);
+(function(){var Tree,TreeState;TreeState=require("./src/treestate.coffee");Tree=require("./src/tree.coffee");module.exports={TreeState:TreeState,Tree:Tree}}).call(this);
