@@ -5,7 +5,7 @@
   "main": "baobab.js",
   "scripts": {
     "build": "npm install && coffee -pc src/baobab.coffee | uglifyjs > baobab.js",
-    "buildWWW": "browserify src/main.coffee -t coffeeify | uglifyjs > dist/main_baobab.js" 
+    "buildWWW": "browserify src/main.coffee -t coffeeify | uglifyjs > dist/main_baobab.js"
   },
   "author": "Evan Lynch",
   "repository": "github.com/eflynch/baobab",
@@ -13,7 +13,7 @@
   "dependencies": {
     "browserify": "^5.11.2",
     "coffeeify": "^0.7.0",
-    "react": "^0.11.2",
+    "react": "^0.12.1",
     "uglify-js": "^2.4.15",
     "underscore": "^1.7.0"
   },

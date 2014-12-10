@@ -17,6 +17,17 @@
 #BAOBAB .BAOBAB_LABEL {
 	border: 1px solid #333333;
 	cursor: pointer;
+	background-color: white;
+}
+
+#BAOBAB .BAOBAB_LABEL.BAOBAB_hasFocus {
+	background-color: #afa;
+}
+#BAOBAB .BAOBAB_LABEL.BAOBAB_collapsed {
+	background-color: #888;
+}
+#BAOBAB .BAOBAB_LABEL.BAOBAB_hasFocus.BAOBAB_collapsed {
+	background-color: #8c8;
 }
 
 #BAOBAB li {
