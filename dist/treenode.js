@@ -70,6 +70,7 @@
         textWidth: this.props.root.getTextWidth(),
         textHeight: this.props.root.getTextHeight(),
         hasFocus: hasFocus,
+        allFocus: this.props.allFocus,
         collapsed: this.props.root.getCollapsed(),
         onFocus: (function(_this) {
           return function() {
@@ -91,13 +92,15 @@
               lineSpacing: this.props.lineSpacing,
               root: subtree,
               focus: this.props.focus,
+              allFocus: this.props.allFocus,
               key: subtree.id,
               left: leftAccumulator - subtree.getWidth(),
               top: this.props.lineSpacing + this.props.root.getLabelHeight(),
               maxDepth: this.props.maxDepth - 1,
               focusCallback: this.props.focusCallback,
               changeCallback: this.props.changeCallback,
-              keyHandler: this.props.keyHandler
+              keyHandler: this.props.keyHandler,
+              onBlur: this.props.onBlur
             }));
           }
           return _results;

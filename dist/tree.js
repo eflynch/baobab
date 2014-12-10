@@ -30,7 +30,8 @@
         focus: initialRoot,
         head: initialRoot,
         clipboard: null,
-        changed: true
+        changed: true,
+        allFocus: true
       };
     },
     getDefaultProps: function() {
@@ -334,7 +335,21 @@
         id: 'BAOBAB',
         style: {
           position: 'relative'
-        }
+        },
+        onFocus: (function(_this) {
+          return function() {
+            return _this.setState({
+              allFocus: true
+            });
+          };
+        })(this),
+        onBlur: (function(_this) {
+          return function() {
+            return _this.setState({
+              allFocus: false
+            });
+          };
+        })(this)
       }, TreeNode({
         keyHandler: (function(_this) {
           return function(e) {
@@ -412,7 +427,7 @@
         changeCallback: this.callbacks().changeCallback,
         onBlur: (function(_this) {
           return function(e) {
-            if (e.relatedTarget === null) {
+            if (_this.state.allFocus && e.relatedTarget === null) {
               _this.setState({
                 focus: null
               });
@@ -421,6 +436,7 @@
         })(this),
         showEtc: this.state.head !== this.state.root,
         focus: this.state.focus,
+        allFocus: this.state.allFocus,
         root: this.state.head,
         maxDepth: this.props.maxAncestor,
         lineSpacing: 20

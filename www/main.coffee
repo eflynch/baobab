@@ -3,7 +3,7 @@ React = require('react')
 
 window.React = React
 
-BaobabTree = Baobab.Tree
+Tree = Baobab.Tree
 TreeState = Baobab.TreeState
 
 window.onload = ->
@@ -12,13 +12,22 @@ window.onload = ->
     onChange = (string) -> document.getElementById('textOutput').value = string
 
     target = document.getElementById('treeview')
-    React.render BaobabTree({onChange: onChange, maxAncestor: maxAncestor, type: type}), target
+    React.render Tree({
+        onChange: onChange,
+        maxAncestor: maxAncestor,
+        type: type
+    }), target
     
     document.getElementById('textInput').onkeydown = (e) ->
         if e.keyCode == 13
             e.preventDefault()
-            initialRoot = treeStateFromJSON(e.currentTarget.value)
-            React.render BaobabTree({setRoot: initialRoot, type: type, maxAncestor: maxAncestor, onChange: onChange}), target
+            initialRoot = TreeState.fromJSON(e.currentTarget.value)
+            React.render Tree({
+                setRoot: initialRoot,
+                type: type,
+                maxAncestor: maxAncestor,
+                onChange: onChange
+            }), target
 
     window.onkeydown = (e) =>
         target = document.getElementById('treeview')
@@ -28,10 +37,10 @@ window.onload = ->
                 when 'rectangle' then 'triangle'
                 when 'triangle' then 'square'
                 when 'square' then 'circle'
-            React.render BaobabTree({type: type, focusType: type, maxAncestor: maxAncestor, onChange: onChange}), target
+            React.render Tree({type: type, focusType: type, maxAncestor: maxAncestor, onChange: onChange}), target
         if e.keyCode == 189 and e.ctrlKey
             maxAncestor = Math.max(maxAncestor - 1, 3)
-            React.render BaobabTree({type: type, maxAncestor: maxAncestor, onChange: onChange}), target
+            React.render Tree({type: type, maxAncestor: maxAncestor, onChange: onChange}), target
         if e.keyCode == 187 and e.ctrlKey
             maxAncestor = Math.min(maxAncestor + 1, 45)
-            React.render BaobabTree({type: type, maxAncestor: maxAncestor, onChange: onChange}), target
+            React.render Tree({type: type, maxAncestor: maxAncestor, onChange: onChange}), target

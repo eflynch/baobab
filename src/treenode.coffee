@@ -27,7 +27,7 @@ TreeNode = React.createClass
         else
             hasFocus = false
         return ra.li
-            onBlur: this.props.onBlur
+            onBlur: @props.onBlur
             style:
                 position: 'absolute'
                 top: @props.top
@@ -59,6 +59,7 @@ TreeNode = React.createClass
                 textWidth: @props.root.getTextWidth()
                 textHeight: @props.root.getTextHeight()
                 hasFocus: hasFocus
+                allFocus: @props.allFocus
                 collapsed: @props.root.getCollapsed()
                 onFocus: =>
                     @props.focusCallback @props.root
@@ -75,6 +76,7 @@ TreeNode = React.createClass
                             lineSpacing: @props.lineSpacing
                             root: subtree
                             focus: @props.focus
+                            allFocus: @props.allFocus
                             key: subtree.id
                             left: leftAccumulator - subtree.getWidth()
                             top: @props.lineSpacing + @props.root.getLabelHeight()
@@ -82,5 +84,6 @@ TreeNode = React.createClass
                             focusCallback: @props.focusCallback
                             changeCallback: @props.changeCallback
                             keyHandler: @props.keyHandler
+                            onBlur: @props.onBlur
 
 module.exports = React.createFactory TreeNode

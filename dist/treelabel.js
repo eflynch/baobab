@@ -69,7 +69,7 @@
       return this.componentDidUpdate();
     },
     componentDidUpdate: function() {
-      if (this.props.hasFocus) {
+      if (this.props.hasFocus && this.props.allFocus) {
         return this.getDOMNode().children[0].focus();
       }
     },

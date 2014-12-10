@@ -47,7 +47,7 @@ TreeLabel = React.createClass
     componentDidMount: ->
         @componentDidUpdate()
     componentDidUpdate: ->
-        if @props.hasFocus
+        if @props.hasFocus and @props.allFocus
             @getDOMNode().children[0].focus()
     render: ->
         return React.createElement TreeLabelWrapper,

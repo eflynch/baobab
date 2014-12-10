@@ -1,5 +1,5 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({".//www/main.coffee":[function(require,module,exports){
-var Baobab, BaobabTree, React, TreeState;
+var Baobab, React, Tree, TreeState;
 
 Baobab = require('../dist/baobab');
 
@@ -7,7 +7,7 @@ React = require('react');
 
 window.React = React;
 
-BaobabTree = Baobab.Tree;
+Tree = Baobab.Tree;
 
 TreeState = Baobab.TreeState;
 
@@ -19,7 +19,7 @@ window.onload = function() {
     return document.getElementById('textOutput').value = string;
   };
   target = document.getElementById('treeview');
-  React.render(BaobabTree({
+  React.render(Tree({
     onChange: onChange,
     maxAncestor: maxAncestor,
     type: type
@@ -28,8 +28,8 @@ window.onload = function() {
     var initialRoot;
     if (e.keyCode === 13) {
       e.preventDefault();
-      initialRoot = treeStateFromJSON(e.currentTarget.value);
-      return React.render(BaobabTree({
+      initialRoot = TreeState.fromJSON(e.currentTarget.value);
+      return React.render(Tree({
         setRoot: initialRoot,
         type: type,
         maxAncestor: maxAncestor,
@@ -53,7 +53,7 @@ window.onload = function() {
               return 'circle';
           }
         })();
-        React.render(BaobabTree({
+        React.render(Tree({
           type: type,
           focusType: type,
           maxAncestor: maxAncestor,
@@ -62,7 +62,7 @@ window.onload = function() {
       }
       if (e.keyCode === 189 && e.ctrlKey) {
         maxAncestor = Math.max(maxAncestor - 1, 3);
-        React.render(BaobabTree({
+        React.render(Tree({
           type: type,
           maxAncestor: maxAncestor,
           onChange: onChange
@@ -70,7 +70,7 @@ window.onload = function() {
       }
       if (e.keyCode === 187 && e.ctrlKey) {
         maxAncestor = Math.min(maxAncestor + 1, 45);
-        return React.render(BaobabTree({
+        return React.render(Tree({
           type: type,
           maxAncestor: maxAncestor,
           onChange: onChange
@@ -190,7 +190,8 @@ window.onload = function() {
         focus: initialRoot,
         head: initialRoot,
         clipboard: null,
-        changed: true
+        changed: true,
+        allFocus: true
       };
     },
     getDefaultProps: function() {
@@ -494,7 +495,21 @@ window.onload = function() {
         id: 'BAOBAB',
         style: {
           position: 'relative'
-        }
+        },
+        onFocus: (function(_this) {
+          return function() {
+            return _this.setState({
+              allFocus: true
+            });
+          };
+        })(this),
+        onBlur: (function(_this) {
+          return function() {
+            return _this.setState({
+              allFocus: false
+            });
+          };
+        })(this)
       }, TreeNode({
         keyHandler: (function(_this) {
           return function(e) {
@@ -572,7 +587,7 @@ window.onload = function() {
         changeCallback: this.callbacks().changeCallback,
         onBlur: (function(_this) {
           return function(e) {
-            if (e.relatedTarget === null) {
+            if (_this.state.allFocus && e.relatedTarget === null) {
               _this.setState({
                 focus: null
               });
@@ -581,6 +596,7 @@ window.onload = function() {
         })(this),
         showEtc: this.state.head !== this.state.root,
         focus: this.state.focus,
+        allFocus: this.state.allFocus,
         root: this.state.head,
         maxDepth: this.props.maxAncestor,
         lineSpacing: 20
@@ -664,7 +680,7 @@ window.onload = function() {
       return this.componentDidUpdate();
     },
     componentDidUpdate: function() {
-      if (this.props.hasFocus) {
+      if (this.props.hasFocus && this.props.allFocus) {
         return this.getDOMNode().children[0].focus();
       }
     },
@@ -775,6 +791,7 @@ window.onload = function() {
         textWidth: this.props.root.getTextWidth(),
         textHeight: this.props.root.getTextHeight(),
         hasFocus: hasFocus,
+        allFocus: this.props.allFocus,
         collapsed: this.props.root.getCollapsed(),
         onFocus: (function(_this) {
           return function() {
@@ -796,13 +813,15 @@ window.onload = function() {
               lineSpacing: this.props.lineSpacing,
               root: subtree,
               focus: this.props.focus,
+              allFocus: this.props.allFocus,
               key: subtree.id,
               left: leftAccumulator - subtree.getWidth(),
               top: this.props.lineSpacing + this.props.root.getLabelHeight(),
               maxDepth: this.props.maxDepth - 1,
               focusCallback: this.props.focusCallback,
               changeCallback: this.props.changeCallback,
-              keyHandler: this.props.keyHandler
+              keyHandler: this.props.keyHandler,
+              onBlur: this.props.onBlur
             }));
           }
           return _results;

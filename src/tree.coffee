@@ -18,6 +18,7 @@ Tree = React.createClass
             head: initialRoot
             clipboard: null
             changed: true
+            allFocus: true
         }
     getDefaultProps: ->
         maxAncestor: 6
@@ -200,9 +201,15 @@ Tree = React.createClass
                 root: @state.root
 
     render: -> ra.div
-        id: 'BAOBAB'
-        style:
-            position: 'relative'
+            id: 'BAOBAB'
+            style:
+                position: 'relative'
+            onFocus: =>
+                @setState
+                    allFocus: true
+            onBlur: =>
+                @setState
+                    allFocus: false
         ,
             TreeNode
                 keyHandler: (e) =>
@@ -264,12 +271,12 @@ Tree = React.createClass
                 focusCallback: @callbacks().focusCallback
                 changeCallback: @callbacks().changeCallback
                 onBlur: (e) =>
-                    if e.relatedTarget is null
+                    if @state.allFocus and e.relatedTarget is null
                         @setState({focus: null})
                     return
-
                 showEtc: @state.head != @state.root
                 focus: @state.focus
+                allFocus: @state.allFocus
                 root: @state.head
                 maxDepth: @props.maxAncestor
                 lineSpacing: 20
