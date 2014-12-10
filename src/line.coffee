@@ -33,7 +33,6 @@ Line = React.createClass
                 left: "#{left}px"
                 top: "#{top}px"
                 position: 'absolute'
-                zIndex: -1
             }
 
 module.exports = React.createFactory Line

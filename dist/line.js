@@ -46,8 +46,7 @@
           backgroundColor: this.props.color,
           left: "" + left + "px",
           top: "" + top + "px",
-          position: 'absolute',
-          zIndex: -1
+          position: 'absolute'
         }
       });
     }

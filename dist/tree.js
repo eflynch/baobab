@@ -58,7 +58,7 @@
           head: nextProps.setRoot
         });
       }
-      if ((nextProps.focusType != null) && nextProps.focusType !== this.state.focus.type) {
+      if ((nextProps.focusType != null) && (this.state.focus != null) && nextProps.focusType !== this.state.focus.type) {
         return this.callbacks().setTypeCallback(nextProps.focusType);
       }
     },

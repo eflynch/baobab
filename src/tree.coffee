@@ -36,7 +36,7 @@ Tree = React.createClass
                 root: nextProps.setRoot
                 focus: nextProps.setRoot
                 head: nextProps.setRoot
-        if nextProps.focusType? and nextProps.focusType != @state.focus.type
+        if nextProps.focusType? and @state.focus? and nextProps.focusType != @state.focus.type
             @callbacks().setTypeCallback nextProps.focusType
     setHeadAndCollapseYouth: (focus = null, head = null) ->
         focus ?= @state.focus
