@@ -52,7 +52,7 @@
     },
     componentWillReceiveProps: function(nextProps) {
       if ((nextProps.setRoot != null) && nextProps.setRoot !== this.state.root) {
-        this.props.setRoot.setOnMutate(this.onMutate);
+        nextProps.setRoot.setOnMutate(this.onMutate);
         this.setState({
           root: nextProps.setRoot,
           focus: nextProps.setRoot,

@@ -32,7 +32,7 @@ Tree = React.createClass
                 head: @props.setRoot
     componentWillReceiveProps: (nextProps) ->
         if nextProps.setRoot? and nextProps.setRoot != @state.root
-            @props.setRoot.setOnMutate @onMutate
+            nextProps.setRoot.setOnMutate @onMutate
             @setState
                 root: nextProps.setRoot
                 focus: nextProps.setRoot
