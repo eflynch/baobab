@@ -1,5 +1,6 @@
 var browserify   = require('browserify');
 var coffeeify    = require('coffeeify');
+var reactify     = require('reactify');
 var watchify     = require('watchify');
 var gulp         = require('gulp');
 var gutil        = require('gulp-util');
@@ -10,7 +11,7 @@ var scriptsDir = './';
 var buildDir = './';
 var entries = [
   {
-    'entry': 'www/main.coffee',
+    'entry': 'www/www.js',
     'exit': 'www/main.js'
   }
 ]
@@ -19,6 +20,7 @@ var buildScript = function(entryPoint, exitPoint) {
   var bundler = watchify(browserify(scriptsDir + '/' + entryPoint, watchify.args));
 
   bundler.transform(coffeeify);
+  bundler.transform(reactify);
 
   bundler.on('update', rebundle);
 
