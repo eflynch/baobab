@@ -11,7 +11,7 @@ var scriptsDir = './';
 var buildDir = './';
 var entries = [
   {
-    'entry': 'www/www.js',
+    'entry': 'src/www.js',
     'exit': 'www/main.js'
   }
 ]

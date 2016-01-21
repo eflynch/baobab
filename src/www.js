@@ -1,7 +1,7 @@
 var React = require('react');
 var ReactDOM = require('react-dom');
 
-var Baobab = require('../dist/baobab');
+var Baobab = require('./baobab');
 
 var Tree = Baobab.Tree;
 var TreeState = Baobab.TreeState;
