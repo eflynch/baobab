@@ -5,7 +5,7 @@
   "main": "dist/baobab.js",
   "scripts": {
     "build": "npm install && coffee --compile --output dist/ src/",
-    "buildWWW": "npm install browserify www/main.coffee -t coffeeify | uglifyjs > www/main.js"
+    "buildWWW": "browserify www/main.coffee -t coffeeify | uglifyjs > www/main.js"
   },
   "author": "Evan Lynch",
   "repository": "github.com/eflynch/baobab",
