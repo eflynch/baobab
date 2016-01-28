@@ -44,10 +44,10 @@ var TreeState = (function() {
                 newTree.serial = makeSerial();
             }
             newTree.mutator('setCollapsed')(simpleObject.collapsed);
-            _ref = simpleObject.children;
+            _ref = simpleObject.childs;
             for (_i = 0, _len = _ref.length; _i < _len; _i++) {
                 subObject = _ref[_i];
-                newTree.children.push(treeStateFromSimpleObject(subObject, newTree));
+                newTree.childs.push(treeStateFromSimpleObject(subObject, newTree));
             }
             return newTree;
         };
@@ -58,7 +58,7 @@ var TreeState = (function() {
         this.value = _arg.value, this.parent = _arg.parent, this.type = _arg.type, this.onMutate = _arg.onMutate;
         this.mutator = __bind(this.mutator, this);
         this.setOnMutate = __bind(this.setOnMutate, this);
-        this.children = [];
+        this.childs = [];
         this.serial = "" + (makeSerial());
         this.collapsed = false;
         this.width = null;
@@ -67,7 +67,7 @@ var TreeState = (function() {
     TreeState.prototype.setOnMutate = function(onMutate) {
         var child, _i, _len, _ref;
         this.onMutate = onMutate;
-        _ref = this.children;
+        _ref = this.childs;
         for (_i = 0, _len = _ref.length; _i < _len; _i++) {
             child = _ref[_i];
             child.setOnMutate(onMutate);
@@ -84,7 +84,7 @@ var TreeState = (function() {
                             var child, _i, _len, _ref;
                             _this.collapsed = newValue;
                             if (newValue === false) {
-                                _ref = _this.children;
+                                _ref = _this.childs;
                                 for (_i = 0, _len = _ref.length; _i < _len; _i++) {
                                     child = _ref[_i];
                                     child.mutator('setCollapsed')(false);
@@ -122,13 +122,13 @@ var TreeState = (function() {
                             }
                             if (sibling != null) {
                                 if (relation === 'right') {
-                                    insertIndex = _this.children.indexOf(sibling);
+                                    insertIndex = _this.childs.indexOf(sibling);
                                 }
                                 if (relation === 'left') {
-                                    insertIndex = _this.children.indexOf(sibling) + 1;
+                                    insertIndex = _this.childs.indexOf(sibling) + 1;
                                 }
                             } else {
-                                insertIndex = _this.children.length;
+                                insertIndex = _this.childs.length;
                             }
                             if (type == null) {
                                 type = _this.type;
@@ -139,7 +139,7 @@ var TreeState = (function() {
                                 type: type,
                                 onMutate: _this.onMutate
                             });
-                            _this.children.splice(insertIndex, 0, newTree);
+                            _this.childs.splice(insertIndex, 0, newTree);
                             _this.soil();
                             return newTree;
                         };
@@ -147,7 +147,7 @@ var TreeState = (function() {
                 case 'addSubTreeExisting':
                     return (function(_this) {
                         return function(tree) {
-                            _this.children.push(tree);
+                            _this.childs.push(tree);
                             tree.parent = _this;
                             return _this.soil();
                         };
@@ -155,7 +155,7 @@ var TreeState = (function() {
                 case 'removeChildren':
                     return (function(_this) {
                         return function() {
-                            _this.children = [];
+                            _this.childs = [];
                             return _this.soil();
                         };
                     })(this);
@@ -163,9 +163,9 @@ var TreeState = (function() {
                     return (function(_this) {
                         return function(child) {
                             var indexToDelete;
-                            indexToDelete = _this.children.indexOf(child);
+                            indexToDelete = _this.childs.indexOf(child);
                             if (indexToDelete != null) {
-                                _this.children.splice(indexToDelete, 1);
+                                _this.childs.splice(indexToDelete, 1);
                             }
                             return _this.soil();
                         };
@@ -174,14 +174,14 @@ var TreeState = (function() {
                     return (function(_this) {
                         return function(nearNess) {
                             var child, _i, _len, _ref;
-                            if (!_this.children.length) {
+                            if (!_this.childs.length) {
                                 return true;
                             }
                             if (nearNess < 0) {
                                 _this.mutator('setCollapsed')(true);
                                 return true;
                             }
-                            _ref = _this.children;
+                            _ref = _this.childs;
                             for (_i = 0, _len = _ref.length; _i < _len; _i++) {
                                 child = _ref[_i];
                                 child.mutator('collapseYouth')(nearNess - 1);
@@ -193,13 +193,13 @@ var TreeState = (function() {
                     return (function(_this) {
                         return function() {
                             var child;
-                            if (_this.children.length !== 1) {
+                            if (_this.childs.length !== 1) {
                                 return false;
                             }
                             if (_this.parent == null) {
                                 return false;
                             }
-                            child = _this.children[0];
+                            child = _this.childs[0];
                             _this.parent.mutator('deleteSubTree')(_this);
                             _this.parent.mutator('addSubTreeExisting')(child);
                             return true;
@@ -226,7 +226,7 @@ var TreeState = (function() {
     };
 
     TreeState.prototype.getCollapsed = function() {
-        if (!this.children.length) {
+        if (!this.childs.length) {
             this.collapsed = false;
             return false;
         }
@@ -245,7 +245,7 @@ var TreeState = (function() {
             return this.width;
         }
         total = 0;
-        _ref = this.children;
+        _ref = this.childs;
         for (_i = 0, _len = _ref.length; _i < _len; _i++) {
             child = _ref[_i];
             total += child.getWidth();
@@ -337,9 +337,9 @@ var TreeState = (function() {
             var child;
             return {
                 value: tree.value,
-                children: (function() {
+                childs: (function() {
                     var _i, _len, _ref, _results;
-                    _ref = tree.children;
+                    _ref = tree.childs;
                     _results = [];
                     for (_i = 0, _len = _ref.length; _i < _len; _i++) {
                         child = _ref[_i];

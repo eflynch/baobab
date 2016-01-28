@@ -85,9 +85,9 @@ var Tree = React.createClass({
             });
             head = parent;
         }
-        oldIndex = parent.children.indexOf(focus);
+        oldIndex = parent.childs.indexOf(focus);
         if (oldIndex > 0) {
-            newFocus = parent.children[oldIndex - 1];
+            newFocus = parent.childs[oldIndex - 1];
         } else {
             newFocus = parent;
         }
@@ -142,7 +142,7 @@ var Tree = React.createClass({
                             type: _this.props.type,
                             onMutate: _this.onMutate
                         });
-                        newTree.children.push(_this.state.root);
+                        newTree.childs.push(_this.state.root);
                         _this.state.root.parent = newTree;
                         _this.setHeadAndCollapseYouth(newTree, newTree);
                         return _this.setState({
@@ -230,12 +230,12 @@ var Tree = React.createClass({
             })(this),
             descendCallback: (function(_this) {
                 return function() {
-                    if (_this.state.focus.children.length) {
+                    if (_this.state.focus.childs.length) {
                         if (_this.state.focus.getCollapsed()) {
                             _this.state.focus.mutator('setCollapsed')(false);
                         }
                         _this.setState({
-                            focus: _this.state.focus.children[0]
+                            focus: _this.state.focus.childs[0]
                         });
                         _this.setHeadAndCollapseYouth();
                     }
@@ -245,10 +245,10 @@ var Tree = React.createClass({
                 return function() {
                     var oldIndex;
                     if (_this.state.focus !== _this.state.head) {
-                        oldIndex = _this.state.focus.parent.children.indexOf(_this.state.focus);
-                        if (_this.state.focus.parent.children.length > (oldIndex + 1)) {
+                        oldIndex = _this.state.focus.parent.childs.indexOf(_this.state.focus);
+                        if (_this.state.focus.parent.childs.length > (oldIndex + 1)) {
                             _this.setState({
-                                focus: _this.state.focus.parent.children[oldIndex + 1]
+                                focus: _this.state.focus.parent.childs[oldIndex + 1]
                             });
                         }
                     }
@@ -258,10 +258,10 @@ var Tree = React.createClass({
                 return function() {
                     var oldIndex;
                     if (_this.state.focus !== _this.state.head) {
-                        oldIndex = _this.state.focus.parent.children.indexOf(_this.state.focus);
+                        oldIndex = _this.state.focus.parent.childs.indexOf(_this.state.focus);
                         if (oldIndex > 0) {
                             _this.setState({
-                                focus: _this.state.focus.parent.children[oldIndex - 1]
+                                focus: _this.state.focus.parent.childs[oldIndex - 1]
                             });
                         }
                     }
@@ -270,16 +270,16 @@ var Tree = React.createClass({
             deleteCallback: (function(_this) {
                 return function() {
                     var child, focus, head, newFocus, newHead, newRoot, parent;
-                    if (_this.state.focus.children.length > 1) {
+                    if (_this.state.focus.childs.length > 1) {
                         return;
                     }
                     if (_this.state.focus.value !== '') {
                         return;
                     }
-                    if (_this.state.focus.children.length === 1) {
+                    if (_this.state.focus.childs.length === 1) {
                         focus = _this.state.focus;
                         parent = _this.state.focus.parent;
-                        child = _this.state.focus.children[0];
+                        child = _this.state.focus.childs[0];
                         head = _this.state.head;
                         newFocus = child;
                         if (focus === _this.state.root) {

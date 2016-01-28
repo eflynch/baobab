@@ -19255,9 +19255,9 @@ var Tree = React.createClass({
             });
             head = parent;
         }
-        oldIndex = parent.subtrees.indexOf(focus);
+        oldIndex = parent.childs.indexOf(focus);
         if (oldIndex > 0) {
-            newFocus = parent.subtrees[oldIndex - 1];
+            newFocus = parent.childs[oldIndex - 1];
         } else {
             newFocus = parent;
         }
@@ -19312,7 +19312,7 @@ var Tree = React.createClass({
                             type: _this.props.type,
                             onMutate: _this.onMutate
                         });
-                        newTree.subtrees.push(_this.state.root);
+                        newTree.childs.push(_this.state.root);
                         _this.state.root.parent = newTree;
                         _this.setHeadAndCollapseYouth(newTree, newTree);
                         return _this.setState({
@@ -19400,12 +19400,12 @@ var Tree = React.createClass({
             })(this),
             descendCallback: (function(_this) {
                 return function() {
-                    if (_this.state.focus.subtrees.length) {
+                    if (_this.state.focus.childs.length) {
                         if (_this.state.focus.getCollapsed()) {
                             _this.state.focus.mutator('setCollapsed')(false);
                         }
                         _this.setState({
-                            focus: _this.state.focus.subtrees[0]
+                            focus: _this.state.focus.childs[0]
                         });
                         _this.setHeadAndCollapseYouth();
                     }
@@ -19415,10 +19415,10 @@ var Tree = React.createClass({
                 return function() {
                     var oldIndex;
                     if (_this.state.focus !== _this.state.head) {
-                        oldIndex = _this.state.focus.parent.subtrees.indexOf(_this.state.focus);
-                        if (_this.state.focus.parent.subtrees.length > (oldIndex + 1)) {
+                        oldIndex = _this.state.focus.parent.childs.indexOf(_this.state.focus);
+                        if (_this.state.focus.parent.childs.length > (oldIndex + 1)) {
                             _this.setState({
-                                focus: _this.state.focus.parent.subtrees[oldIndex + 1]
+                                focus: _this.state.focus.parent.childs[oldIndex + 1]
                             });
                         }
                     }
@@ -19428,10 +19428,10 @@ var Tree = React.createClass({
                 return function() {
                     var oldIndex;
                     if (_this.state.focus !== _this.state.head) {
-                        oldIndex = _this.state.focus.parent.subtrees.indexOf(_this.state.focus);
+                        oldIndex = _this.state.focus.parent.childs.indexOf(_this.state.focus);
                         if (oldIndex > 0) {
                             _this.setState({
-                                focus: _this.state.focus.parent.subtrees[oldIndex - 1]
+                                focus: _this.state.focus.parent.childs[oldIndex - 1]
                             });
                         }
                     }
@@ -19440,16 +19440,16 @@ var Tree = React.createClass({
             deleteCallback: (function(_this) {
                 return function() {
                     var child, focus, head, newFocus, newHead, newRoot, parent;
-                    if (_this.state.focus.subtrees.length > 1) {
+                    if (_this.state.focus.childs.length > 1) {
                         return;
                     }
                     if (_this.state.focus.value !== '') {
                         return;
                     }
-                    if (_this.state.focus.subtrees.length === 1) {
+                    if (_this.state.focus.childs.length === 1) {
                         focus = _this.state.focus;
                         parent = _this.state.focus.parent;
-                        child = _this.state.focus.subtrees[0];
+                        child = _this.state.focus.childs[0];
                         head = _this.state.head;
                         newFocus = child;
                         if (focus === _this.state.root) {
@@ -19709,9 +19709,9 @@ var TreeNode = React.createClass({displayName: "TreeNode",
         };
     },
     render: function() {
-        var hasFocus, leftAccumulator, subtree;
+        var hasFocus, leftAccumulator, child;
         if (this.props.focus != null) {
-            hasFocus = this.props.focus.id === this.props.root.id;
+            hasFocus = this.props.focus.serial === this.props.root.serial;
         } else {
             hasFocus = false;
         }
@@ -19751,15 +19751,15 @@ var TreeNode = React.createClass({displayName: "TreeNode",
                     function (){
                         if (!this.props.root.getCollapsed()) {
                             var leftAccumulator = 0;
-                            return this.props.root.subtrees.map(function (subtree){
-                                leftAccumulator += subtree.getWidth();
+                            return this.props.root.childs.map(function (child){
+                                leftAccumulator += child.getWidth();
                                 return (
                                     React.createElement(TreeNode, {lineSpacing: this.props.lineSpacing, 
-                                              root: subtree, 
+                                              root: child, 
                                               focus: this.props.focus, 
                                               allFocus: this.props.allFocus, 
-                                              key: subtree.id, 
-                                              left: leftAccumulator - subtree.getWidth(), 
+                                              key: child.serial, 
+                                              left: leftAccumulator - child.getWidth(), 
                                               top: this.props.lineSpacing + this.props.root.getLabelHeight(), 
                                               maxDepth: this.props.maxDepth - 1, 
                                               focusCallback: this.props.focusCallback, 
@@ -19783,7 +19783,7 @@ module.exports = TreeNode;
 
 var __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
 
-var makeid = function(size) {
+var makeSerial = function(size) {
     var num, possible, text;
     if (size == null) {
         size = 5;
@@ -19821,15 +19821,15 @@ var TreeState = (function() {
                 type: simpleObject.type,
                 onMutate: onMutate
             });
-            newTree.id = simpleObject.id;
+            newTree.serial = simpleObject.serial;
             if (newIDs) {
-                newTree.id = makeid();
+                newTree.serial = makeSerial();
             }
             newTree.mutator('setCollapsed')(simpleObject.collapsed);
-            _ref = simpleObject.subtrees;
+            _ref = simpleObject.childs;
             for (_i = 0, _len = _ref.length; _i < _len; _i++) {
                 subObject = _ref[_i];
-                newTree.subtrees.push(treeStateFromSimpleObject(subObject, newTree));
+                newTree.childs.push(treeStateFromSimpleObject(subObject, newTree));
             }
             return newTree;
         };
@@ -19840,19 +19840,19 @@ var TreeState = (function() {
         this.value = _arg.value, this.parent = _arg.parent, this.type = _arg.type, this.onMutate = _arg.onMutate;
         this.mutator = __bind(this.mutator, this);
         this.setOnMutate = __bind(this.setOnMutate, this);
-        this.subtrees = [];
-        this.id = "" + (makeid());
+        this.childs = [];
+        this.serial = "" + (makeSerial());
         this.collapsed = false;
         this.width = null;
     }
 
     TreeState.prototype.setOnMutate = function(onMutate) {
-        var subtree, _i, _len, _ref;
+        var child, _i, _len, _ref;
         this.onMutate = onMutate;
-        _ref = this.subtrees;
+        _ref = this.childs;
         for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-            subtree = _ref[_i];
-            subtree.setOnMutate(onMutate);
+            child = _ref[_i];
+            child.setOnMutate(onMutate);
         }
     };
 
@@ -19863,13 +19863,13 @@ var TreeState = (function() {
                 case 'setCollapsed':
                     return (function(_this) {
                         return function(newValue) {
-                            var subtree, _i, _len, _ref;
+                            var child, _i, _len, _ref;
                             _this.collapsed = newValue;
                             if (newValue === false) {
-                                _ref = _this.subtrees;
+                                _ref = _this.childs;
                                 for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-                                    subtree = _ref[_i];
-                                    subtree.mutator('setCollapsed')(false);
+                                    child = _ref[_i];
+                                    child.mutator('setCollapsed')(false);
                                 }
                             }
                             _this.soil();
@@ -19904,13 +19904,13 @@ var TreeState = (function() {
                             }
                             if (sibling != null) {
                                 if (relation === 'right') {
-                                    insertIndex = _this.subtrees.indexOf(sibling);
+                                    insertIndex = _this.childs.indexOf(sibling);
                                 }
                                 if (relation === 'left') {
-                                    insertIndex = _this.subtrees.indexOf(sibling) + 1;
+                                    insertIndex = _this.childs.indexOf(sibling) + 1;
                                 }
                             } else {
-                                insertIndex = _this.subtrees.length;
+                                insertIndex = _this.childs.length;
                             }
                             if (type == null) {
                                 type = _this.type;
@@ -19921,7 +19921,7 @@ var TreeState = (function() {
                                 type: type,
                                 onMutate: _this.onMutate
                             });
-                            _this.subtrees.splice(insertIndex, 0, newTree);
+                            _this.childs.splice(insertIndex, 0, newTree);
                             _this.soil();
                             return newTree;
                         };
@@ -19929,7 +19929,7 @@ var TreeState = (function() {
                 case 'addSubTreeExisting':
                     return (function(_this) {
                         return function(tree) {
-                            _this.subtrees.push(tree);
+                            _this.childs.push(tree);
                             tree.parent = _this;
                             return _this.soil();
                         };
@@ -19937,17 +19937,17 @@ var TreeState = (function() {
                 case 'removeChildren':
                     return (function(_this) {
                         return function() {
-                            _this.subtrees = [];
+                            _this.childs = [];
                             return _this.soil();
                         };
                     })(this);
                 case 'deleteSubTree':
                     return (function(_this) {
-                        return function(subtree) {
+                        return function(child) {
                             var indexToDelete;
-                            indexToDelete = _this.subtrees.indexOf(subtree);
+                            indexToDelete = _this.childs.indexOf(child);
                             if (indexToDelete != null) {
-                                _this.subtrees.splice(indexToDelete, 1);
+                                _this.childs.splice(indexToDelete, 1);
                             }
                             return _this.soil();
                         };
@@ -19955,18 +19955,18 @@ var TreeState = (function() {
                 case 'collapseYouth':
                     return (function(_this) {
                         return function(nearNess) {
-                            var subtree, _i, _len, _ref;
-                            if (!_this.subtrees.length) {
+                            var child, _i, _len, _ref;
+                            if (!_this.childs.length) {
                                 return true;
                             }
                             if (nearNess < 0) {
                                 _this.mutator('setCollapsed')(true);
                                 return true;
                             }
-                            _ref = _this.subtrees;
+                            _ref = _this.childs;
                             for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-                                subtree = _ref[_i];
-                                subtree.mutator('collapseYouth')(nearNess - 1);
+                                child = _ref[_i];
+                                child.mutator('collapseYouth')(nearNess - 1);
                             }
                             return true;
                         };
@@ -19975,13 +19975,13 @@ var TreeState = (function() {
                     return (function(_this) {
                         return function() {
                             var child;
-                            if (_this.subtrees.length !== 1) {
+                            if (_this.childs.length !== 1) {
                                 return false;
                             }
                             if (_this.parent == null) {
                                 return false;
                             }
-                            child = _this.subtrees[0];
+                            child = _this.childs[0];
                             _this.parent.mutator('deleteSubTree')(_this);
                             _this.parent.mutator('addSubTreeExisting')(child);
                             return true;
@@ -20008,7 +20008,7 @@ var TreeState = (function() {
     };
 
     TreeState.prototype.getCollapsed = function() {
-        if (!this.subtrees.length) {
+        if (!this.childs.length) {
             this.collapsed = false;
             return false;
         }
@@ -20018,7 +20018,7 @@ var TreeState = (function() {
     };
 
     TreeState.prototype.getWidth = function() {
-        var subtree, total, _i, _len, _ref;
+        var child, total, _i, _len, _ref;
         if (this.width != null) {
             return this.width;
         }
@@ -20027,10 +20027,10 @@ var TreeState = (function() {
             return this.width;
         }
         total = 0;
-        _ref = this.subtrees;
+        _ref = this.childs;
         for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-            subtree = _ref[_i];
-            total += subtree.getWidth();
+            child = _ref[_i];
+            total += child.getWidth();
         }
         if (total > this.width) {
             this.width = total;
@@ -20116,21 +20116,21 @@ var TreeState = (function() {
     TreeState.prototype.toJSON = function() {
         var toSimpleObject;
         toSimpleObject = function(tree) {
-            var subtree;
+            var child;
             return {
                 value: tree.value,
-                subtrees: (function() {
+                childs: (function() {
                     var _i, _len, _ref, _results;
-                    _ref = tree.subtrees;
+                    _ref = tree.childs;
                     _results = [];
                     for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-                        subtree = _ref[_i];
-                        _results.push(toSimpleObject(subtree));
+                        child = _ref[_i];
+                        _results.push(toSimpleObject(child));
                     }
                     return _results;
                 })(),
                 collapsed: tree.collapsed,
-                id: tree.id,
+                serial: tree.serial,
                 type: tree.type
             };
         };

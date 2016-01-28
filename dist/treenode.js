@@ -69,7 +69,7 @@ var TreeNode = React.createClass({displayName: "TreeNode",
                     function (){
                         if (!this.props.root.getCollapsed()) {
                             var leftAccumulator = 0;
-                            return this.props.root.children.map(function (child){
+                            return this.props.root.childs.map(function (child){
                                 leftAccumulator += child.getWidth();
                                 return (
                                     React.createElement(TreeNode, {lineSpacing: this.props.lineSpacing, 
