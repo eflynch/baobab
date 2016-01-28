@@ -62,8 +62,8 @@ var TreeNode = React.createClass({
                            collapsed={this.props.root.getCollapsed()}
                            onFocus={function (){this.props.focusCallback(this.props.root);}.bind(this)}
                            keyHandler={this.props.keyHandler}
-                           changeCallback={this.props.changeCallback}>
-                    {this.props.value}
+                           changeCallback={this.props.changeCallback}
+                           value={this.props.root.value}>
                 </TreeLabel>
                 <ul>
                     {function (){

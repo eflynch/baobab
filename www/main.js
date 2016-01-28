@@ -19653,7 +19653,7 @@ TreeLabel = React.createClass({
     },
     componentDidUpdate: function() {
         if (this.props.hasFocus && this.props.allFocus) {
-            return ReactDOM.findDOMNode(this).children[0].focus();
+            return ReactDOM.findDOMNode(this.refs.textarea).focus();
         }
     },
     render: function() {
@@ -19662,7 +19662,7 @@ TreeLabel = React.createClass({
                               collapsed: this.props.collapsed, left: this.props.left, 
                               width: this.props.width, height: this.props.height, 
                               onFocus: this.props.onFocus, onKeyDown: this.props.keyHandler}, 
-                React.createElement("textarea", {type: "text", value: this.props.children, 
+                React.createElement("textarea", {type: "text", value: this.props.value, ref: "textarea", 
                           style: {
                             width: this.props.textWidth,
                             height: this.props.textHeight,
@@ -19744,8 +19744,8 @@ var TreeNode = React.createClass({displayName: "TreeNode",
                            collapsed: this.props.root.getCollapsed(), 
                            onFocus: function (){this.props.focusCallback(this.props.root);}.bind(this), 
                            keyHandler: this.props.keyHandler, 
-                           changeCallback: this.props.changeCallback}, 
-                    this.props.value
+                           changeCallback: this.props.changeCallback, 
+                           value: this.props.root.value}
                 ), 
                 React.createElement("ul", null, 
                     function (){
