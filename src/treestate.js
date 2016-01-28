@@ -1,7 +1,7 @@
 
 var __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
 
-var makeid = function(size) {
+var makeSerial = function(size) {
     var num, possible, text;
     if (size == null) {
         size = 5;
@@ -39,15 +39,15 @@ var TreeState = (function() {
                 type: simpleObject.type,
                 onMutate: onMutate
             });
-            newTree.id = simpleObject.id;
+            newTree.serial = simpleObject.serial;
             if (newIDs) {
-                newTree.id = makeid();
+                newTree.serial = makeSerial();
             }
             newTree.mutator('setCollapsed')(simpleObject.collapsed);
-            _ref = simpleObject.subtrees;
+            _ref = simpleObject.children;
             for (_i = 0, _len = _ref.length; _i < _len; _i++) {
                 subObject = _ref[_i];
-                newTree.subtrees.push(treeStateFromSimpleObject(subObject, newTree));
+                newTree.children.push(treeStateFromSimpleObject(subObject, newTree));
             }
             return newTree;
         };
@@ -58,19 +58,19 @@ var TreeState = (function() {
         this.value = _arg.value, this.parent = _arg.parent, this.type = _arg.type, this.onMutate = _arg.onMutate;
         this.mutator = __bind(this.mutator, this);
         this.setOnMutate = __bind(this.setOnMutate, this);
-        this.subtrees = [];
-        this.id = "" + (makeid());
+        this.children = [];
+        this.serial = "" + (makeSerial());
         this.collapsed = false;
         this.width = null;
     }
 
     TreeState.prototype.setOnMutate = function(onMutate) {
-        var subtree, _i, _len, _ref;
+        var child, _i, _len, _ref;
         this.onMutate = onMutate;
-        _ref = this.subtrees;
+        _ref = this.children;
         for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-            subtree = _ref[_i];
-            subtree.setOnMutate(onMutate);
+            child = _ref[_i];
+            child.setOnMutate(onMutate);
         }
     };
 
@@ -81,13 +81,13 @@ var TreeState = (function() {
                 case 'setCollapsed':
                     return (function(_this) {
                         return function(newValue) {
-                            var subtree, _i, _len, _ref;
+                            var child, _i, _len, _ref;
                             _this.collapsed = newValue;
                             if (newValue === false) {
-                                _ref = _this.subtrees;
+                                _ref = _this.children;
                                 for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-                                    subtree = _ref[_i];
-                                    subtree.mutator('setCollapsed')(false);
+                                    child = _ref[_i];
+                                    child.mutator('setCollapsed')(false);
                                 }
                             }
                             _this.soil();
@@ -122,13 +122,13 @@ var TreeState = (function() {
                             }
                             if (sibling != null) {
                                 if (relation === 'right') {
-                                    insertIndex = _this.subtrees.indexOf(sibling);
+                                    insertIndex = _this.children.indexOf(sibling);
                                 }
                                 if (relation === 'left') {
-                                    insertIndex = _this.subtrees.indexOf(sibling) + 1;
+                                    insertIndex = _this.children.indexOf(sibling) + 1;
                                 }
                             } else {
-                                insertIndex = _this.subtrees.length;
+                                insertIndex = _this.children.length;
                             }
                             if (type == null) {
                                 type = _this.type;
@@ -139,7 +139,7 @@ var TreeState = (function() {
                                 type: type,
                                 onMutate: _this.onMutate
                             });
-                            _this.subtrees.splice(insertIndex, 0, newTree);
+                            _this.children.splice(insertIndex, 0, newTree);
                             _this.soil();
                             return newTree;
                         };
@@ -147,7 +147,7 @@ var TreeState = (function() {
                 case 'addSubTreeExisting':
                     return (function(_this) {
                         return function(tree) {
-                            _this.subtrees.push(tree);
+                            _this.children.push(tree);
                             tree.parent = _this;
                             return _this.soil();
                         };
@@ -155,17 +155,17 @@ var TreeState = (function() {
                 case 'removeChildren':
                     return (function(_this) {
                         return function() {
-                            _this.subtrees = [];
+                            _this.children = [];
                             return _this.soil();
                         };
                     })(this);
                 case 'deleteSubTree':
                     return (function(_this) {
-                        return function(subtree) {
+                        return function(child) {
                             var indexToDelete;
-                            indexToDelete = _this.subtrees.indexOf(subtree);
+                            indexToDelete = _this.children.indexOf(child);
                             if (indexToDelete != null) {
-                                _this.subtrees.splice(indexToDelete, 1);
+                                _this.children.splice(indexToDelete, 1);
                             }
                             return _this.soil();
                         };
@@ -173,18 +173,18 @@ var TreeState = (function() {
                 case 'collapseYouth':
                     return (function(_this) {
                         return function(nearNess) {
-                            var subtree, _i, _len, _ref;
-                            if (!_this.subtrees.length) {
+                            var child, _i, _len, _ref;
+                            if (!_this.children.length) {
                                 return true;
                             }
                             if (nearNess < 0) {
                                 _this.mutator('setCollapsed')(true);
                                 return true;
                             }
-                            _ref = _this.subtrees;
+                            _ref = _this.children;
                             for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-                                subtree = _ref[_i];
-                                subtree.mutator('collapseYouth')(nearNess - 1);
+                                child = _ref[_i];
+                                child.mutator('collapseYouth')(nearNess - 1);
                             }
                             return true;
                         };
@@ -193,13 +193,13 @@ var TreeState = (function() {
                     return (function(_this) {
                         return function() {
                             var child;
-                            if (_this.subtrees.length !== 1) {
+                            if (_this.children.length !== 1) {
                                 return false;
                             }
                             if (_this.parent == null) {
                                 return false;
                             }
-                            child = _this.subtrees[0];
+                            child = _this.children[0];
                             _this.parent.mutator('deleteSubTree')(_this);
                             _this.parent.mutator('addSubTreeExisting')(child);
                             return true;
@@ -226,7 +226,7 @@ var TreeState = (function() {
     };
 
     TreeState.prototype.getCollapsed = function() {
-        if (!this.subtrees.length) {
+        if (!this.children.length) {
             this.collapsed = false;
             return false;
         }
@@ -236,7 +236,7 @@ var TreeState = (function() {
     };
 
     TreeState.prototype.getWidth = function() {
-        var subtree, total, _i, _len, _ref;
+        var child, total, _i, _len, _ref;
         if (this.width != null) {
             return this.width;
         }
@@ -245,10 +245,10 @@ var TreeState = (function() {
             return this.width;
         }
         total = 0;
-        _ref = this.subtrees;
+        _ref = this.children;
         for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-            subtree = _ref[_i];
-            total += subtree.getWidth();
+            child = _ref[_i];
+            total += child.getWidth();
         }
         if (total > this.width) {
             this.width = total;
@@ -334,21 +334,21 @@ var TreeState = (function() {
     TreeState.prototype.toJSON = function() {
         var toSimpleObject;
         toSimpleObject = function(tree) {
-            var subtree;
+            var child;
             return {
                 value: tree.value,
-                subtrees: (function() {
+                children: (function() {
                     var _i, _len, _ref, _results;
-                    _ref = tree.subtrees;
+                    _ref = tree.children;
                     _results = [];
                     for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-                        subtree = _ref[_i];
-                        _results.push(toSimpleObject(subtree));
+                        child = _ref[_i];
+                        _results.push(toSimpleObject(child));
                     }
                     return _results;
                 })(),
                 collapsed: tree.collapsed,
-                id: tree.id,
+                serial: tree.serial,
                 type: tree.type
             };
         };

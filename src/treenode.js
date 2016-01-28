@@ -27,7 +27,7 @@ var TreeNode = React.createClass({
         };
     },
     render: function() {
-        var hasFocus, leftAccumulator, subtree;
+        var hasFocus, leftAccumulator, child;
         if (this.props.focus != null) {
             hasFocus = this.props.focus.id === this.props.root.id;
         } else {
@@ -69,15 +69,15 @@ var TreeNode = React.createClass({
                     {function (){
                         if (!this.props.root.getCollapsed()) {
                             var leftAccumulator = 0;
-                            return this.props.root.subtrees.map(function (subtree){
-                                leftAccumulator += subtree.getWidth();
+                            return this.props.root.children.map(function (child){
+                                leftAccumulator += child.getWidth();
                                 return (
                                     <TreeNode lineSpacing={this.props.lineSpacing}
-                                              root={subtree}
+                                              root={child}
                                               focus={this.props.focus}
                                               allFocus={this.props.allFocus}
-                                              key={subtree.id}
-                                              left={leftAccumulator - subtree.getWidth()}
+                                              key={child.id}
+                                              left={leftAccumulator - child.getWidth()}
                                               top={this.props.lineSpacing + this.props.root.getLabelHeight()}
                                               maxDepth={this.props.maxDepth - 1}
                                               focusCallback={this.props.focusCallback}
