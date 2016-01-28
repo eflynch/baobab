@@ -1,4 +1,5 @@
 var React = require('react');
+var ReactDOM = require('react-dom');
 var cx = require('classnames');
 
 TreeLabelWrapper = React.createClass({
@@ -60,7 +61,7 @@ TreeLabel = React.createClass({
     },
     componentDidUpdate: function() {
         if (this.props.hasFocus && this.props.allFocus) {
-            return this.getDOMNode().children[0].focus();
+            return ReactDOM.findDOMNode(this).children[0].focus();
         }
     },
     render: function() {

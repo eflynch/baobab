@@ -24,23 +24,24 @@ var Line = React.createClass({
         left = this.props.startX;
         top = this.props.startY;
         length = Math.sqrt(Math.pow(Math.abs(this.props.startX - this.props.endX), 2) + Math.pow(Math.abs(this.props.startY - this.props.endY), 2));
+        var style = {
+            width: length,
+            height: this.props.width,
+            msTransformOrigin: '0% 0%',
+            WebkitTransformOrigin: '0% 0%',
+            MozTransformOrigin: '0% 0%',
+            transformOrigin: '0% 0%',
+            msTransform: "rotate(" + angle + "deg)",
+            WebkitTransform: "rotate(" + angle + "deg)",
+            MozTransform: "rotate(" + angle + "deg)",
+            Transform: "rotate(" + angle + "deg)",
+            backgroundColor: this.props.color,
+            left: left,
+            top: top,
+            position: 'absolute'
+        }
         return (
-            <div className='BAOBAB_line' style={{
-                    width: length,
-                    height: this.props.width,
-                    msTransformOrigin: '0% 0%',
-                    WebkitTransformOrigin: '0% 0%',
-                    MozTransformOrigin: '0% 0%',
-                    transformOrigin: '0% 0%',
-                    msTransform: "rotate(" + angle + "deg)",
-                    WebkitTransform: "rotate(" + angle + "deg)",
-                    MozTransform: "rotate(" + angle + "deg)",
-                    Transform: "rotate(" + angle + "deg)",
-                    backgroundColor: this.props.color,
-                    left: left,
-                    top: top,
-                    position: 'absolute'
-                }}/>
+            <div className='BAOBAB_line' style={style}/>
         );
     }
 });

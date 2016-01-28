@@ -36,7 +36,7 @@ var TreeNode = React.createClass({
         return (
             <li onBlur={this.props.onBlur} style={{position:'absolute', top:this.props.top, left:this.props.left, width: this.props.root.getWidth()}}>
                 {function(){
-                    if (this.props.root.parent !== null){
+                    if (this.props.root.parent !== null && this.props.root.parent !== undefined){
                         if (this.props.showEtc){
                             return <Line width='2px' color='#aaa' startX={this.getLineValues().startX}
                                        startY={this.getLineValues().startY}
