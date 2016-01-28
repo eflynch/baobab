@@ -29,7 +29,7 @@ var TreeNode = React.createClass({displayName: "TreeNode",
     render: function() {
         var hasFocus, leftAccumulator, child;
         if (this.props.focus != null) {
-            hasFocus = this.props.focus.id === this.props.root.id;
+            hasFocus = this.props.focus.serial === this.props.root.serial;
         } else {
             hasFocus = false;
         }
@@ -76,7 +76,7 @@ var TreeNode = React.createClass({displayName: "TreeNode",
                                               root: child, 
                                               focus: this.props.focus, 
                                               allFocus: this.props.allFocus, 
-                                              key: child.id, 
+                                              key: child.serial, 
                                               left: leftAccumulator - child.getWidth(), 
                                               top: this.props.lineSpacing + this.props.root.getLabelHeight(), 
                                               maxDepth: this.props.maxDepth - 1, 
