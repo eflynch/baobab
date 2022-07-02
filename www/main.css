@@ -1,3 +1,7 @@
+body {
+    background-color: #62545B;
+    font-family: monospace;
+}
 #treeview {
 	height: 500px;
 	overflow: scroll;

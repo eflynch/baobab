@@ -5,7 +5,66 @@
 		<script src="main.js"></script>
 	</head>
 	<body>
-		<h1>Baobab</h1>
+		<div style='position:fixed; z-index:-1; left:100px; top:90px;'>
+			<table>
+            <thead>
+                <tr>
+                    <th>Action</th>
+                    <th>Keybindings</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Navigate</td>
+                    <td>⇧←, ⇧→, ⇧↓, ⇧↑</td>
+                </tr>
+                <tr>
+                	<td>Change Shape</td>
+                	<td>⌘/</td>
+                </tr>
+                <tr>
+                    <td>Add Left Sibling</td>
+                    <td>⇧⌘←</td>
+                </tr>
+                <tr>
+                    <td>Add Right Sibling</td>
+                    <td>⇧⌘→, ⇥</td>
+                </tr>
+                <tr>
+                    <td>Add Child</td>
+                    <td>⇧⌘↓, ↩</td>
+                </tr>
+                <tr>
+                    <td>Add Parent</td>
+                    <td>⇧⌘↑</td>
+                </tr>
+                <tr>
+                    <td>Delete Empty</td>
+                    <td>⌫</td>
+                </tr>
+                <tr>
+                    <td>Delete Subtree</td>
+                    <td>⇧⌫</td>
+                </tr>
+                <tr>
+                    <td>Set Head</td>
+                    <td>⌃↩</td>
+                </tr>
+                <tr>
+                    <td>Collapse/Expand</td>
+                    <td>⇧+SPACE</td>
+                </tr>
+                <tr>
+                    <td>Copy Subtree</td>
+                    <td>⌃C</td>
+                </tr>
+                <tr>
+                    <td>Append from Clipboard</td>
+                    <td>⌃V</td>
+                </tr>
+            </tbody>
+           </table>
+		</div>
 		<div id='treeview'></div>
 		<div id='textview'>
 			<div class='textGroup'>
@@ -16,6 +75,7 @@
 				<label>Enter JSON:</label>
 				<textarea id='textInput'></textarea>
 			</div>
+			
 			
 		</div>
 	</body>
