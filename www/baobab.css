@@ -1,0 +1,63 @@
+#BAOBAB {
+	color: black;
+	font-family: monospace;
+	font-size: 11px;
+	line-height: 14px;
+	box-sizing: initial;
+	-webkit-box-sizing: initial;
+	-moz-box-sizing: initial;
+}
+
+#BAOBAB * {
+	box-sizing: initial;
+	-webkit-box-sizing: initial;
+	-moz-box-sizing: initial;
+}
+
+#BAOBAB .BAOBAB_LABEL {
+	border: 1px solid #333333;
+	cursor: pointer;
+	background-color: white;
+	z-index: 1;
+}
+
+#BAOBAB .BAOBAB_LABEL.BAOBAB_hasFocus {
+	background-color: #afa;
+}
+#BAOBAB .BAOBAB_LABEL.BAOBAB_collapsed {
+	background-color: #888;
+}
+#BAOBAB .BAOBAB_LABEL.BAOBAB_hasFocus.BAOBAB_collapsed {
+	background-color: #8c8;
+}
+
+#BAOBAB li {
+	list-style: none;
+	color: black;
+}
+
+#BAOBAB ul {
+	padding-left: 0px;
+}
+
+
+#BAOBAB input, button, select, textarea {
+	font-family: inherit;
+	font-size: inherit;
+	line-height: inherit;
+	outline: none;
+	cursor: pointer;
+}
+#BAOBAB input, textarea:focus {
+	cursor: text;
+}
+
+#BAOBAB textarea {
+	background: transparent;
+	resize: none;
+	border: none;
+	overflow: hidden;
+	padding: 0;
+	top: 0;
+	left: 0;
+}
